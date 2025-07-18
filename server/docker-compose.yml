@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: unityalgo_erp
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      # Persistent storage for PostgreSQL data
+      - postgres_data:/var/lib/postgresql/data
+      # Optional: Custom PostgreSQL configuration
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Django Application Container
+  django:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: django_app
+    environment:
+      # Database configuration
+      DB_NAME: unityalgo_erp
+      DB_USER: admin
+      DB_PASSWORD: admin
+      DB_HOST: postgres
+      DB_PORT: 5432
+      # Django settings
+      DEBUG: 1
+      SECRET_KEY: your-secret-key-here
+    volumes:
+      # Link your project directory to container workdir
+      - .:/app
+      # Persistent storage for media files
+      - media_files:/app/media
+      # Persistent storage for static files
+      - static_files:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    networks:
+      - app-network
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
+
+# Named volumes for persistent storage
+volumes:
+  postgres_data:
+    driver: local
+  media_files:
+    driver: local
+  static_files:
+    driver: local
+
+# Custom network for container communication
+networks:
+  app-network:
+    driver: bridge
