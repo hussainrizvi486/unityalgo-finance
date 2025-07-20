@@ -1,10 +1,10 @@
 @import "tailwindcss";
-/* @import "tw-animate-css";
-@source "../node_modules/@my-company/ui-lib";
+@import "tw-animate-css";
+/* @source "../node_modules/@my-company/ui-lib"; */
 
 html {
     @apply font-poppins;
-} */
+}
 
 
 input[type='number']::-webkit-outer-spin-button,

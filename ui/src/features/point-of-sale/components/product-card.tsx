@@ -1,3 +1,4 @@
+import { SERVER_URL } from "../../../api";
 import { formatCurrency } from "../../../utils";
 import type { TypeProduct } from "../types";
 
@@ -11,7 +12,7 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = (props) => {
     const { product } = props;
 
-    const image = product.image || "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRsuilBKtOw0Fx1T2c1-nJvBfWLawRf17S-Ug&s"
+    const image = product.cover_image ? SERVER_URL + product.cover_image : "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRsuilBKtOw0Fx1T2c1-nJvBfWLawRf17S-Ug&s"
     return (
         <div
             className="p-1 h-48 bg-white rounded-md cursor-pointer border border-gray-300"

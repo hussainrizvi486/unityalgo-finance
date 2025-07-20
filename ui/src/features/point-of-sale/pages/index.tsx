@@ -2,9 +2,12 @@ import { PackageIcon, Search as SearchIcon } from "lucide-react";
 import { Summary } from "../components/summary"
 import { useProductQuery } from "../api/product";
 import { ProductCard } from "../components/product-card";
-import { addItem } from "../slices/summary";
+import { addItem, setProfile } from "../slices/summary";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../../store";
+import { useProfileQuery } from "../api/profile";
+import { useEffect } from "react";
+
 
 
 const SearchBar = () => {
@@ -27,15 +30,16 @@ const Brand = () => {
         </div>
     )
 }
+
+
 const Header = () => {
     return (
-        <div className="px-4 py-4 flex items-center justify-between">
+        <div className="px-4 py-3 flex items-center justify-between shadow-sm">
+
             <div className="flex items-center">
                 <div className="mr-4">
                     <Brand />
                 </div>
-
-
                 <SearchBar />
             </div>
 
@@ -77,17 +81,29 @@ const ItemGridLoading = () => {
 
 
 
+
 const Index = () => {
     const dispatch = useDispatch();
     const { data: products, isLoading, isSuccess } = useProductQuery();
     const state = useSelector((state: RootState) => state.pos);
 
-    // console.log(data);
+
+
+    const POSProfileQuery = useProfileQuery();
+
+
+    useEffect(() => {
+        if (POSProfileQuery.data && POSProfileQuery.isSuccess) {
+            dispatch(setProfile(POSProfileQuery.data));
+        }
+    }, [POSProfileQuery.data, POSProfileQuery.isSuccess, POSProfileQuery.isLoading]);
+
+
     return (
         <div>
             <Header />
             <div>
-                <div className="grid grid-cols-10 gap-1">
+                <div className="grid grid-cols-10 gap-1 py-4">
                     <div className="col-span-7">
                         <div className="overflow-y-scroll h-[90vh]">
                             {

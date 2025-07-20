@@ -1,3 +1,8 @@
 from django.contrib import admin
+from .models.customer import Customer, CustomerGroup
+from .models.company import Company
 
-# Register your models here.
+
+admin.site.register(Customer)
+admin.site.register(CustomerGroup)
+admin.site.register(Company)

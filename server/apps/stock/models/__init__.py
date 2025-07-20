@@ -1,4 +1,4 @@
-from .product import Product, ProductCategory
+from .product import Product, ProductCategory, ProductPrice, PriceList
 
 
 __all__ = [

@@ -26,7 +26,6 @@ class Customer(BaseModel):
     tax_id = models.CharField(max_length=50, blank=True, null=True)
     disabled = models.BooleanField(default=False)
     is_frozen = models.BooleanField(default=True)
-
     primary_address = models.CharField(max_length=255, blank=True, null=True)
     primary_contact = models.CharField(max_length=255, blank=True, null=True)
 

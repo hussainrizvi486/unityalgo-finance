@@ -34,3 +34,6 @@ class Account(models.Model):
 
     def __str__(self):
         return f"{self.account_number} - {self.account_name}"
+
+    class Meta:
+        managed = False

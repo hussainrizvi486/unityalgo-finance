@@ -6,5 +6,17 @@ export interface TypeProduct {
         name: string
     }
     price: number
-    image?: string
+    cover_image?: string
+}
+
+export interface TypePOSProfile {
+    id: string
+    name: string
+    currency: string
+    price_list: {
+        id: string
+        name: string
+        currency: string
+        is_default: boolean
+    }
 }
