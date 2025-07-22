@@ -2,9 +2,12 @@
 __pycache__/
 *.py[cod]
 
-# Distribution / packaging
-.Python
+# Virtual Environments
 env/
+.venv/
+.Python
+
+# Distribution / Packaging
 build/
 develop-eggs/
 dist/
@@ -18,17 +21,16 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-.
+
 # Django
 *.log
 *.pot
 *.pyc
 static/
 temp/
-__pycache__/
-# local_settings.py
-.env/   
-# db.sqlite3
+local_settings.py
+db.sqlite3
+.env
 
 # Logs
 logs/
@@ -45,8 +47,8 @@ dist/
 dist-ssr/
 *.local
 
-# Editor directories and files
-.vscode/*
+# Editor Directories and Files
+.vscode/
 !.vscode/extensions.json
 .idea/
 .DS_Store
@@ -55,3 +57,6 @@ dist-ssr/
 *.njsproj
 *.sln
 *.sw?
+
+# Misc
+.env

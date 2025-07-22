@@ -21,6 +21,7 @@ class POSInvoiceListSerializer(ModelSerializer):
         model = POSInvoice
         fields = [
             "id",
+            "status",
             "invoice_no",
             "customer",
             "posting_date",
