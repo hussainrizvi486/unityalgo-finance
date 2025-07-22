@@ -1,5 +1,6 @@
 from uuid import uuid4
 from django.db import models
+from django.utils import timezone
 from apps.accounting.models.company import Company
 
 
@@ -16,7 +17,11 @@ class BaseModel(models.Model):
 
 class Branch(models.Model):
     company = models.ForeignKey(
-        Company, on_delete=models.CASCADE, related_name="branches", null=True, blank=True
+        Company,
+        on_delete=models.CASCADE,
+        related_name="branches",
+        null=True,
+        blank=True,
     )
     branch_name = models.CharField(max_length=255, unique=True, primary_key=True)
 

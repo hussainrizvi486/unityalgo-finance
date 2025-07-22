@@ -61,8 +61,18 @@ export const summarySlice = createSlice({
                 state.selectedSummary = selected
             }
         },
+
+
         addSummary(state, action: { payload: TypeSummary }) {
             state.summaries.push(action.payload);
+        },
+
+        removeSummary(state, action: PayloadAction<string>) {
+            state.summaries = state.summaries.filter(summary => summary.id !== action.payload);
+            state.summaries.forEach((summary, idx) => {
+                summary.serial_no = idx + 1;
+            });
+
         },
 
         setCustomer(state, action: PayloadAction<{ id: string, customer_name: string } | null>) {
@@ -109,7 +119,7 @@ export const summarySlice = createSlice({
             summary.items = summary.items.filter(item => item.id !== id);
             calculateSummary(summary);
         },
-        
+
         addItem(state, action: PayloadAction<{ product: TypeSummaryItem, id: string }>) {
             const { product, id } = action.payload;
             const summary = state.summaries.find(summary => summary.id === id);

@@ -1,19 +1,18 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { DemoComponent } from "./demo/component"
+import { Toaster } from 'react-hot-toast';
+import { BrowserRouter, useRoutes, Routes, Route } from 'react-router-dom';
+import { routes } from './features/point-of-sale/routes';
 
 
-const PointOfSale = React.lazy(() => import('./features/point-of-sale/pages/index'));
+const POS = () => {
+  return useRoutes(routes);
+}
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/demo" element={<DemoComponent />} />
-
-        <Route path="/pos" element={<PointOfSale />} />
-
-      </Routes>
+      <Toaster />
+      <POS />
     </BrowserRouter>
   );
 }

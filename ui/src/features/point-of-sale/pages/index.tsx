@@ -96,7 +96,8 @@ const Index = () => {
         if (POSProfileQuery.data && POSProfileQuery.isSuccess) {
             dispatch(setProfile(POSProfileQuery.data));
         }
-    }, [POSProfileQuery.data, POSProfileQuery.isSuccess, POSProfileQuery.isLoading]);
+    }, [POSProfileQuery.data, POSProfileQuery.isSuccess,    ]);
+
 
 
     return (

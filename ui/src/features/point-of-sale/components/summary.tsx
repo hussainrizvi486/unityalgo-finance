@@ -16,7 +16,7 @@ import { SummaryItem } from "./summary-item";
 import { AutoComplete } from "../../../components/ui/autocomplete";
 import { SERVER_URL } from "../../../api";
 import { decimal } from "../../../utils";
-
+import toast from "react-hot-toast";
 
 export const Summary = () => {
     const state = useSelector((state: RootState) => state.pos);
@@ -27,9 +27,9 @@ export const Summary = () => {
 
     if (!summary) { return <></> };
 
-    const handleCheckout = () => {
-        console.log(state);
+    const handleCheckout = async () => {
         const { profile } = state;
+
         if (!profile) {
             return alert("Please set the POS profile");
         }
@@ -52,12 +52,16 @@ export const Summary = () => {
         }));
 
         const invoice = {
-            profile: profile.id,
+            pos_profile: profile.id,
             customer: summary.customer.id,
             items: invoiceItems,
         }
 
-        console.log(invoice)
+        const response = await axios.post(SERVER_URL + 'api/pos/create-invoice', invoice)
+        if (response.status === 200) {
+            toast.success("Invoice created successfully");
+        }
+
     }
     const createSummary = () => {
         const { summaries } = state;
@@ -97,8 +101,7 @@ export const Summary = () => {
 
                 <div className="mb-4">
                     <AutoComplete label="Select Customer"
-
-                        defaultValue={summary.customer ? { label: summary.customer.customer_name, value: summary.customer.id } : null}
+                        value={summary.customer ? { label: summary.customer.customer_name, value: summary.customer.id } : null}
                         getOptions={async function () {
                             const request = await axios.get(SERVER_URL + 'api/customer');
                             return request.data.map((customer: { customer_name: string; id: string }) => ({ label: customer.customer_name, value: customer.id }));

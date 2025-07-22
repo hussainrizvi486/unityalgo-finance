@@ -17,8 +17,7 @@ interface AutoCompleteProps {
     label: string;
     className?: string;
     options?: OptionType[];
-    defaultValue?: OptionType | null;
-
+    value?: OptionType | null;
     getOptions?: () => Promise<{ label: string; value: string }[]>;
     onChange?: (option: OptionType | null) => void;
     renderOption?: (option: OptionType) => React.ReactNode;
@@ -42,7 +41,7 @@ const AutoCompleteOption: React.FC<AutoCompleteOptionProps> = (props) => {
 
 const AutoComplete: React.FC<AutoCompleteProps> = (props) => {
     const [open, setOpen] = useState(false);
-    const [selected, setSelected] = useState<OptionType | null>(props.defaultValue || null);
+    const [selected, setSelected] = useState<OptionType | null>(props.value || null);
     const [results, setResults] = useState<OptionType[]>(props.options || []);
     const [query, setQuery] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -54,14 +53,15 @@ const AutoComplete: React.FC<AutoCompleteProps> = (props) => {
         setIsLoading(true);
         props.getOptions().then((data) => {
             setResults(data.map(option => ({ label: option.label, value: option.value })));
-            if (props.defaultValue) {
-                const selectedOption = data.find(option => option.value === props.defaultValue?.value);
+            if (props.value) {
+                const selectedOption = data.find(option => option.value === props.value?.value);
                 setSelected(selectedOption || null);
             }
             setIsLoading(false);
         }).catch(() => {
             setIsLoading(false);
         });
+
     }, [props])
 
     const handleSelect = React.useCallback((option: OptionType) => {
