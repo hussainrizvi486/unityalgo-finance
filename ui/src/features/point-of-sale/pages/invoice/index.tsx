@@ -1,5 +1,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { ListView } from "../../../../components/listview";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { SERVER_URL } from "../../../../api";
 
 // Example Usage with Sample Data
 interface User {
@@ -10,6 +13,15 @@ interface User {
     status: 'active' | 'inactive';
     createdAt: string;
 }
+
+
+interface TypeInvoice {
+    invoice_no: string
+    customer: string
+    posting_date: string
+    grand_total: number
+}
+
 
 const sampleUsers: User[] = [
     { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Admin', status: 'active', createdAt: '2024-01-15' },
@@ -34,7 +46,7 @@ const userColumns: ColumnDef<User>[] = [
         cell: ({ row }) => (
             <span className="font-medium text-gray-900">{row.getValue('id')}</span>
         ),
-        
+
     },
     {
         accessorKey: 'name',
@@ -100,7 +112,23 @@ const userColumns: ColumnDef<User>[] = [
     },
 ];
 
+
+const useInvoiceQuery = () => {
+    return useQuery<Array<TypeInvoice>>({
+        queryKey: ['invoice-list'],
+        queryFn: async () => {
+            const response = await axios.get(SERVER_URL + 'api/pos/invoices/list');
+            return response.data;
+        },
+        refetchOnWindowFocus: false,
+    })
+}
+
+
 const Index = () => {
+    const { data: invoices, isLoading, error } = useInvoiceQuery();
+    console.log(invoices)
+
     return (
         <div className="">
             <h1>Invoice Page</h1>

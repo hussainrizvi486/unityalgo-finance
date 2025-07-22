@@ -1,4 +1,5 @@
 from rest_framework.views import APIView
+from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 from ..models.invoice import POSInvoice, POSInvoiceItem
@@ -13,6 +14,25 @@ class POSInvoiceItemSerializer(ModelSerializer):
             "price",
             # "price_list",
         ]
+
+
+class POSInvoiceListSerializer(ModelSerializer):
+    class Meta:
+        model = POSInvoice
+        fields = [
+            "id",
+            "invoice_no",
+            "customer",
+            "posting_date",
+            "grand_total",
+        ]
+
+
+class POSInvoiceViewSet(viewsets.ViewSet):
+    def list(self, *args, **kwargs):
+        queryset = POSInvoice.objects.all()
+        serializer = POSInvoiceListSerializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class POSInvoiceSerializer(ModelSerializer):

@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from 'axios';
 import { Plus as PlusIcon, Satellite } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { addSummary, selectSummary, setCustomer } from "../slices/summary";
+import { addSummary, removeSummary, selectSummary, setCustomer } from "../slices/summary";
 import type { RootState } from "../../../store";
 import {
     Select,
@@ -58,8 +58,10 @@ export const Summary = () => {
         }
 
         const response = await axios.post(SERVER_URL + 'api/pos/create-invoice', invoice)
-        if (response.status === 200) {
+        if (response.status === 201) {
             toast.success("Invoice created successfully");
+            dispatch(removeSummary(summary.id));
+            return;
         }
 
     }

@@ -9,11 +9,26 @@ from .base import BaseModel, Branch
 # class BaseInvoice: ...
 
 
+class POSInvoiceStatus(models.TextChoices):
+    DRAFT = "draft", "Draft"
+    RETURN = "return", "Return"
+    PAID = "paid", "Paid"
+    UNPAID = "unpaid", "Unpaid"
+    CANCELLED = "cancelled", "Cancelled"
+    OVERDUE = "overdue", "Overdue"
+    CREDIT_NOTE_ISSUED = "credit_note_issued", "Credit Note Issued"
+
+
 class POSInvoice(BaseModel):
     invoice_no = models.CharField(max_length=255, unique=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     posting_date = models.DateTimeField(default=timezone.now())
     is_return = models.BooleanField(default=False)
+    status = models.CharField(
+        max_length=50,
+        choices=POSInvoiceStatus.choices,
+        default=POSInvoiceStatus.DRAFT,
+    )
     branch = models.ForeignKey(
         Branch,
         on_delete=models.CASCADE,
@@ -40,9 +55,9 @@ class POSInvoice(BaseModel):
     )
 
     def save(self, *args, **kwargs):
-        current_time = timezone.now()
         if not self.invoice_no:
-            self.invoice_no = f"INV-{current_time.strftime('%Y%m%d%H%M%S')}"
+            invoices = POSInvoice.objects.count()
+            self.invoice_no = f"{str(invoices + 1).zfill(6)}"
 
         self.total_amount = sum(item.amount for item in self.items.all())
         self.total_quantity = sum(item.quantity for item in self.items.all())

@@ -62,7 +62,6 @@ export const summarySlice = createSlice({
             }
         },
 
-
         addSummary(state, action: { payload: TypeSummary }) {
             state.summaries.push(action.payload);
         },
@@ -72,7 +71,6 @@ export const summarySlice = createSlice({
             state.summaries.forEach((summary, idx) => {
                 summary.serial_no = idx + 1;
             });
-
         },
 
         setCustomer(state, action: PayloadAction<{ id: string, customer_name: string } | null>) {
@@ -140,5 +138,5 @@ export const summarySlice = createSlice({
 })
 
 
-export const { addSummary, setProfile, addItem, selectSummary, deleteItem, updateItemQty, setCustomer } = summarySlice.actions;
+export const { addSummary, setProfile, addItem, selectSummary, deleteItem, updateItemQty, setCustomer, removeSummary } = summarySlice.actions;
 export default summarySlice.reducer;
