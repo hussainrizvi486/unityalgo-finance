@@ -12,7 +12,7 @@ import {
     RowSelectionState,
 } from '@tanstack/react-table';
 import { ChevronUp, ChevronDown, Search, ChevronLeft, ChevronRight, Trash2, Edit, MoreHorizontal } from 'lucide-react';
-import { cn } from '../../utils';
+import { cn } from '@/utils';
 
 // Generic ListView Props Interface
 interface ListViewProps<T> {
@@ -85,7 +85,7 @@ function ListView<T>({
                 />
             ),
             enableSorting: false,
-            size: 50,
+            size: 25,
         };
 
         return [selectionColumn, ...columns];
@@ -144,54 +144,18 @@ function ListView<T>({
 
     return (
         <div className={cn("w-full bg-white rounded-lg shadow-lg", className)}>
-            {/* Header */}
-            <div className="mb-6">
-                <div className="flex items-center justify-between mb-4">
-                    {/* <h2 className="text-2xl font-bold text-gray-800">{title}</h2> */}
 
-                    {/* Selection Summary */}
-                    {selectable && selectedCount > 0 && (
-                        <div className="flex items-center space-x-2 text-sm text-gray-600 bg-blue-50 px-3 py-1 rounded-lg">
-                            <span>{selectedCount} selected</span>
-                            <button
-                                onClick={() => setRowSelection({})}
-                                className="text-blue-600 hover:text-blue-800 underline"
-                            >
-                                Clear selection
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex items-center justify-between">
-                    {/* {searchable && (
-                        <div className="relative max-w-md">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <input
-                                type="text"
-                                placeholder={searchPlaceholder}
-                                value={globalFilter ?? ''}
-                                onChange={(e) => setGlobalFilter(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
-                            />
-                        </div>
-                    )} */}
-
-                    {/* Bulk Actions */}
-
-                </div>
-            </div>
 
             {/* Table */}
             <div className="overflow-x-auto border border-gray-200 rounded-lg">
-                <table className="w-full">
+                <table className="w-full table-fixed">
                     <thead className="bg-gray-50 border-b border-gray-200">
                         {table.getHeaderGroups().map((headerGroup) => (
                             <tr key={headerGroup.id}>
                                 {headerGroup.headers.map((header) => (
                                     <th
                                         key={header.id}
-                                        className="px-6 py-2 text-left text-xs font-medium uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                                        className="px-3 py-2 text-left text-xs font-medium cursor-pointer hover:bg-gray-100 transition-colors"
                                         onClick={header.column.getCanSort() ? header.column.getToggleSortingHandler() : undefined}
                                         style={{ width: header.column.getSize() }}
                                     >
@@ -204,7 +168,7 @@ function ListView<T>({
                                                         header.getContext()
                                                     )}
                                             </span>
-                                            {header.column.getCanSort() && (
+                                            {/* {header.column.getCanSort() && (
                                                 <div className="flex flex-col">
                                                     {header.column.getIsSorted() === 'asc' ? (
                                                         <ChevronUp className="w-4 h-4 text-blue-600" />
@@ -217,23 +181,20 @@ function ListView<T>({
                                                         </div>
                                                     )}
                                                 </div>
-                                            )}
+                                            )} */}
                                         </div>
                                     </th>
                                 ))}
                             </tr>
                         ))}
                     </thead>
+
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {table.getRowModel().rows.map((row, index) => (
+                        {table.getRowModel().rows.map((row, _) => (
                             <tr
                                 key={row.id}
-                                className={`hover:bg-gray-50 transition-colors cursor-pointer ${row.getIsSelected()
-                                    ? 'bg-blue-50 border-blue-200'
-                                    : index % 2 === 0 ? 'bg-white' : 'bg-gray-25'
-                                    }`}
+                                className={cn("hover:bg-gray-50 transition-colors cursor-pointer", row.getIsSelected() ? 'bg-blue-50 border-blue-200' : 'bg-white')}
                                 onClick={(e) => {
-                                    // Only trigger row selection if not clicking on checkbox or other interactive elements
                                     if (selectable && !['INPUT', 'BUTTON'].includes((e.target as HTMLElement).tagName)) {
                                         row.toggleSelected();
                                     }
@@ -242,7 +203,7 @@ function ListView<T>({
                                 {row.getVisibleCells().map((cell) => (
                                     <td
                                         key={cell.id}
-                                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                                        className="px-3 py-2 whitespace-nowrap text-sm text-gray-900"
                                     >
                                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                     </td>
@@ -251,6 +212,22 @@ function ListView<T>({
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            <div className="mb-6">
+                <div>
+                    {selectable && selectedCount > 0 && (
+                        <div className="flex items-center space-x-2 text-sm text-gray-600 bg-blue-50 px-3 py-1 rounded-lg">
+                            <span>{selectedCount} selected</span>
+                            <button
+                                onClick={() => setRowSelection({})}
+                                className="text-blue-600 hover:text-blue-800 underline"
+                            >
+                                Clear selection
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Empty State */}
@@ -262,23 +239,21 @@ function ListView<T>({
                     </p>
                 </div>
             )}
-            {selectable && showBulkActions && selectedCount > 0 && bulkActions.length > 0 && (
+            {/* {selectable && showBulkActions && selectedCount > 0 && bulkActions.length > 0 && (
                 <div className="flex items-center space-x-2">
                     {bulkActions.map((action, index) => (
                         <button
                             key={index}
                             onClick={() => action.onClick(selectedRows)}
-                            className={`flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${action.variant === 'danger'
-                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
+                            className={cn("flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors ", action.variant === 'danger' && "bg-red-100 text-red-700 hover:bg-red-200", action.variant !== 'danger' && "bg-gray-100 text-gray-700 hover:bg-gray-200")}
                         >
                             {action.icon}
                             <span>{action.label}</span>
                         </button>
                     ))}
                 </div>
-            )}
+            )} */}
+
             {/* Pagination */}
             {/* {showPagination && table.getRowModel().rows.length > 0 && (
                 <div className="flex items-center justify-between mt-6">

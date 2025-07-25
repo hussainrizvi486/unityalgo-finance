@@ -17,7 +17,7 @@ interface User {
 
 interface TypeInvoice {
     invoice_no: string;
-    id: string;
+    // id: string;
     customer: string;
     posting_date: string;
     status: string;
@@ -29,16 +29,16 @@ const columns: ColumnDef<TypeInvoice>[] = [
         accessorKey: 'invoice_no',
         header: 'Invoice No',
         cell: ({ row }) => (
-            <span className="font-medium text-gray-900">{row.getValue('invoice_no')}</span>
+            <span className="font-bold ">#{row.getValue('invoice_no')}</span>
         ),
     },
-    {
-        accessorKey: 'id',
-        header: 'ID',
-        cell: ({ row }) => (
-            <span className="text-gray-700">{row.getValue('id')}</span>
-        ),
-    },
+    // {
+    //     accessorKey: 'id',
+    //     header: 'ID',
+    //     cell: ({ row }) => (
+    //         <span className="text-gray-700">{row.getValue('id')}</span>
+    //     ),
+    // },
     {
         accessorKey: 'customer',
         header: 'Customer',
@@ -86,7 +86,7 @@ const columns: ColumnDef<TypeInvoice>[] = [
         accessorKey: 'grand_total',
         header: 'Grand Total',
         cell: ({ row }) => (
-            <span className="text-gray-900">
+            <span className="text-gray-900 text-right">
                 {Number(row.getValue('grand_total')).toLocaleString(undefined, { style: 'currency', currency: 'USD' })}
             </span>
         ),
@@ -112,7 +112,7 @@ const Index = () => {
     console.log(invoices)
 
     return (
-        <div className="">
+        <div className="max-w-7xl mx-auto">
             <h1>Invoice Page</h1>
             <ListView
                 data={invoices || []}

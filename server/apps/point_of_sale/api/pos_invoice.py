@@ -1,11 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework import viewsets
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer
+from rest_framework import serializers
 from ..models.invoice import POSInvoice, POSInvoiceItem
 
 
-class POSInvoiceItemSerializer(ModelSerializer):
+class POSInvoiceItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = POSInvoiceItem
         fields = [
@@ -16,7 +16,8 @@ class POSInvoiceItemSerializer(ModelSerializer):
         ]
 
 
-class POSInvoiceListSerializer(ModelSerializer):
+class POSInvoiceListSerializer(serializers.ModelSerializer):
+    customer = serializers.CharField(source='customer.customer_name', read_only=True)
     class Meta:
         model = POSInvoice
         fields = [
@@ -36,7 +37,7 @@ class POSInvoiceViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 
-class POSInvoiceSerializer(ModelSerializer):
+class POSInvoiceSerializer(serializers.ModelSerializer):
     items = POSInvoiceItemSerializer(many=True)
 
     class Meta:
@@ -78,8 +79,8 @@ class POSInvoiceAPIView(APIView):
         return Response(serializer.data, status=200)
 
 
-class POSInvoiceDetailSerializer(ModelSerializer):
-    class ItemSerializer(ModelSerializer):
+class POSInvoiceDetailSerializer(serializers.ModelSerializer):
+    class ItemSerializer(serializers.ModelSerializer):
         class Meta:
             model = POSInvoiceItem
             fields = [
