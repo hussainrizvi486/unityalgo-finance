@@ -5,13 +5,12 @@ import type { RouteObject } from "react-router-dom";
 const PointOfSale = React.lazy(() => import("./pages/index"));
 const Invoices = React.lazy(() => import("./pages/invoice/index"));
 
-const Layout = () => (<div></div>)
-
+import { Layout } from "./../../layout";
 export const routes: RouteObject[] = [
     {
         path: "/pos",
         element: <PointOfSale />
-        
+
         // children: [
         //     {  },
         //     { path: "invoices/list", element: <Invoices /> },
@@ -23,7 +22,14 @@ export const routes: RouteObject[] = [
         // ]
     },
     {
-        path: "/pos/invoices",
-        element: <Invoices />
-    }
+        path: "/app",
+        element: <Layout />,
+        children: [
+            { path: "invoices", element: <Invoices /> },
+        ]
+    },
+    // {
+    //     path: "/admin/invoices",
+    //     element: <Invoices />
+    // }
 ]

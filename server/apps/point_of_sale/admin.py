@@ -16,3 +16,4 @@ class POSInvoiceItemInline(admin.TabularInline):
 @admin.register(POSInvoice)
 class POSInvoiceAdmin(admin.ModelAdmin):
     inlines = [POSInvoiceItemInline]
+    list_display = ["invoice_no", "customer", "grand_total"]

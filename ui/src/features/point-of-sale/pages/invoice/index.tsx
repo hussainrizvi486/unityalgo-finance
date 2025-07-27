@@ -3,6 +3,8 @@ import { ListView } from "../../../../components/listview";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { SERVER_URL } from "../../../../api";
+import { Sidebar, SidebarProvider } from "../../../../components/ui/sidebar";
+import { useState } from "react";
 
 // Example Usage with Sample Data
 interface User {
@@ -29,7 +31,7 @@ const columns: ColumnDef<TypeInvoice>[] = [
         accessorKey: 'invoice_no',
         header: 'Invoice No',
         cell: ({ row }) => (
-            <span className="font-bold ">#{row.getValue('invoice_no')}</span>
+            <span>#{row.getValue('invoice_no')}</span>
         ),
     },
     // {
@@ -84,11 +86,11 @@ const columns: ColumnDef<TypeInvoice>[] = [
     },
     {
         accessorKey: 'grand_total',
-        header: 'Grand Total',
+        header: () => <div className="text-right">Grand Total</div>,
         cell: ({ row }) => (
-            <span className="text-gray-900 text-right">
+            <div className="text-gray-900 text-right">
                 {Number(row.getValue('grand_total')).toLocaleString(undefined, { style: 'currency', currency: 'USD' })}
-            </span>
+            </div>
         ),
     },
 ];
@@ -106,22 +108,22 @@ const useInvoiceQuery = () => {
     })
 }
 
-
 const Index = () => {
     const { data: invoices, isLoading, error } = useInvoiceQuery();
     console.log(invoices)
 
     return (
-        <div className="max-w-7xl mx-auto">
-            <h1>Invoice Page</h1>
-            <ListView
-                data={invoices || []}
-                columns={columns}
-                title="User Management"
-                searchPlaceholder="Search users..."
-                pageSize={8}
-                showPagination={true}
-            />
+        <div>
+            <div className="max-w-7xl mx-auto">
+                <h1>Invoice Page</h1>
+                <ListView
+                    data={invoices || []}
+                    columns={columns}
+                    pageSize={8}
+                    showPagination={true}
+                />
+            </div>
+
         </div>
     );
 }
