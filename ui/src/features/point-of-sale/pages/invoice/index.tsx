@@ -1,21 +1,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { ListView } from "../../../../components/listview";
+import { ListView } from "@/components/listview";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { SERVER_URL } from "../../../../api";
-import { Sidebar, SidebarProvider } from "../../../../components/ui/sidebar";
-import { useState } from "react";
-
-// Example Usage with Sample Data
-interface User {
-    id: number;
-    name: string;
-    email: string;
-    role: string;
-    status: 'active' | 'inactive';
-    createdAt: string;
-}
-
+import { SERVER_URL } from "@/api";
 
 interface TypeInvoice {
     invoice_no: string;
@@ -110,12 +97,12 @@ const useInvoiceQuery = () => {
 
 const Index = () => {
     const query = useInvoiceQuery();
-    
+
 
     return (
         <div>
             <div >
-                <h1>Invoice Page</h1>
+                <h1>Sales Invoice</h1>
                 <ListView
                     query={query}
                     columns={columns}

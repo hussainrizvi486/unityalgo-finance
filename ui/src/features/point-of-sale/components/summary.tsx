@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Plus as PlusIcon, Satellite } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { addSummary, removeSummary, selectSummary, setCustomer } from "../slices/summary";
-import type { RootState } from "../../../store";
+import type { RootState } from "@/store";
 import {
     Select,
     SelectContent,
@@ -11,11 +11,11 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "../../../components/ui/select";
+} from "@/components/ui/select";
+import { AutoComplete } from "@/components/ui/autocomplete";
+import { SERVER_URL } from "@/api";
+import { decimal } from "@/utils";
 import { SummaryItem } from "./summary-item";
-import { AutoComplete } from "../../../components/ui/autocomplete";
-import { SERVER_URL } from "../../../api";
-import { decimal } from "../../../utils";
 import toast from "react-hot-toast";
 
 export const Summary = () => {
@@ -75,7 +75,7 @@ export const Summary = () => {
             <div>
                 <div className="mb-4 flex justify-between items-center">
                     <h1 className="font-bold text-xl">Order Summary</h1>
-                    <div className="flex gap-2 items-center">
+                    {/* <div className="flex gap-2 items-center">
                         <Select onValueChange={(value) => {
                             dispatch(selectSummary(value));
                         }} defaultValue={selected}>
@@ -98,11 +98,12 @@ export const Summary = () => {
                         <button onClick={createSummary} className="rounded-md bg-gray-200 p-2">
                             <PlusIcon className="stroke-3" />
                         </button>
-                    </div>
+                    </div> */}
                 </div>
 
                 <div className="mb-4">
                     <AutoComplete label="Select Customer"
+
                         value={summary.customer ? { label: summary.customer.customer_name, value: summary.customer.id } : null}
                         getOptions={async function () {
                             const request = await axios.get(SERVER_URL + 'api/customer');
@@ -114,8 +115,7 @@ export const Summary = () => {
                                 dispatch(setCustomer(null));
                                 return;
                             }
-                            dispatch(setCustomer({ customer_name: val?.label, id: val.value }));
-
+                            dispatch(setCustomer({ customer_name: val?.label, id: val.value }))
                         }}
                     />
                 </div>
