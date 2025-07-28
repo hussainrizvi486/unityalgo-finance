@@ -18,7 +18,7 @@ import { Checkbox } from '../ui/checkbox';
 
 // Generic ListView Props Interface
 interface ListViewProps<T> {
-    data: T[];
+    data?: T[];
     query?: UseQueryResult<T[], Error>;
     columns: ColumnDef<T>[];
     searchable?: boolean;

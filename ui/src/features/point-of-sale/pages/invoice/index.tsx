@@ -109,15 +109,15 @@ const useInvoiceQuery = () => {
 }
 
 const Index = () => {
-    const { data: invoices, isLoading, error } = useInvoiceQuery();
-    console.log(invoices)
+    const query = useInvoiceQuery();
+    
 
     return (
         <div>
-            <div className="max-w-7xl mx-auto">
+            <div >
                 <h1>Invoice Page</h1>
                 <ListView
-                    data={invoices || []}
+                    query={query}
                     columns={columns}
                     pageSize={8}
                     showPagination={true}
