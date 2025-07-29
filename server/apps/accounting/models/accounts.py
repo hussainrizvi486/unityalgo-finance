@@ -1,5 +1,14 @@
+import uuid
 from django.db import models
 from .company import Company
+
+
+class RootAccountTypeChoices(models.TextChoices):
+    ASSET = "asset", "Asset"
+    LIABILITY = "liability", "Liability"
+    EQUITY = "equity", "Equity"
+    REVENUE = "revenue", "Revenue"
+    EXPENSE = "expense", "Expense"
 
 
 class AccountTypeChoices(models.TextChoices):
@@ -11,14 +20,19 @@ class AccountTypeChoices(models.TextChoices):
 
 
 class Account(models.Model):
-    account_number = models.CharField(max_length=255, unique=True)
+    id = models.CharField(max_length=99, primary_key=True, default=uuid.uuid4)
+    account_number = models.CharField(max_length=255, blank=True, null=True)
+    # root_type = models.CharField(
+    #     max_length=50,
+    #     choices=RootAccountTypeChoices.choices,
+    # )
     account_name = models.CharField(max_length=255)
     account_type = models.CharField(
         max_length=50,
         choices=AccountTypeChoices.choices,
         default=AccountTypeChoices.ASSET,
     )
-    parent_account = models.ForeignKey(
+    parent = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
         null=True,
@@ -36,7 +50,7 @@ class Account(models.Model):
     disabled = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.account_number} - {self.account_name}"
+        return f"{self.account_number or ''} {self.account_name}"
 
     # class Meta:
     #     managed = False
