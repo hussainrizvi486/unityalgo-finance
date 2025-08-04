@@ -18,12 +18,12 @@ class Account(models.Model):
         choices=AccountTypeChoices.choices,
         default=AccountTypeChoices.ASSET,
     )
-    parent_account = models.ForeignKey(
+    parent = models.ForeignKey(
         "self",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name="sub_accounts",
+        related_name="descendants",
     )
     company = models.ForeignKey(
         Company, on_delete=models.CASCADE, related_name="accounts"
@@ -37,6 +37,3 @@ class Account(models.Model):
 
     def __str__(self):
         return f"{self.account_number} - {self.account_name}"
-
-    # class Meta:
-    #     managed = False

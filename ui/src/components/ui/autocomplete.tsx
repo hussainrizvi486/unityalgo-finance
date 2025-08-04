@@ -33,7 +33,10 @@ const AutoCompleteOption: React.FC<AutoCompleteOptionProps> = (props) => {
     }
 
     return (
-        <div className='flex gap-2 px-2 py-1.5 overflow-hidden items-center hover:bg-accent cursor-pointer rounded-md transition-colors' onClick={() => props.onClick(props)}>
+        <div className='flex gap-2 px-2 py-1.5 overflow-hidden items-center hover:bg-accent cursor-pointer rounded-md transition-colors'
+            onClick={() => props.onClick(props)}
+        >
+
             <div className='text-sm'>{props.label}</div>
         </div>
     )
@@ -91,26 +94,28 @@ const AutoComplete: React.FC<AutoCompleteProps> = (props) => {
                 style={{ width: "var(--radix-popover-trigger-width)" }}
                 className="p-1"
             >
-                <div className="mb-2 flex items-center px-2 border-b border-b-gray-200">
+                <div className="mb-2 flex items-center px-2 border-b border-b-gray-200 ">
                     <div><SearchIcon className='size-4' /></div>
                     <input type="text" className='px-2 py-1 w-full outline-none text-sm rounded-md flex-auto' placeholder='Search here'
                         value={query} onChange={(e) => setQuery(e.target.value)}
                     />
                 </div>
 
-                {
-                    !isLoading && results?.length ?
-                        results?.map((option, index) => (<AutoCompleteOption key={index} {...option} onClick={handleSelect} />)) :
-                        isLoading ? (
-                            <div>
-                                <Spinner className='mx-auto' />
-                            </div>
-                        ) : (
-                            <div className='text-center text-sm text-gray-500'>
-                                No results found
-                            </div>
-                        )
-                }
+                <div className='max-h-60 overflow-y-auto'>
+                    {
+                        !isLoading && results?.length ?
+                            results.filter(option => option.label.toLowerCase().includes(query.toLowerCase())).map((option, index) => (<AutoCompleteOption key={index} {...option} onClick={handleSelect} />)) :
+                            isLoading ? (
+                                <div>
+                                    <Spinner className='mx-auto' />
+                                </div>
+                            ) : (
+                                <div className='text-center text-sm text-gray-500'>
+                                    No results found
+                                </div>
+                            )
+                    }
+                </div>
             </PopoverContent>
         </Popover>
     )

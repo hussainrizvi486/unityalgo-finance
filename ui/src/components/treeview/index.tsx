@@ -2,11 +2,11 @@
 
 import { useState, createContext, useContext, useCallback } from "react";
 import type React from "react";
-import { Folder, FolderOpen, FileText, CheckCircle2, Dot as DotIcon } from "lucide-react";
+import { Folder, FolderOpen, CheckCircle2, Dot as DotIcon } from "lucide-react";
 
 import { formatCurrency } from "../../utils";
 
-interface TypeTreeNode {
+export interface TypeTreeNode {
     label: string;
     data?: Record<string, any>;
     description?: string;
@@ -41,288 +41,288 @@ const useTreeContext = () => {
     return context;
 };
 
-const tempData: TypeTreeNode[] = [
-    {
-        id: "assets-unityalgo",
-        label: "Assets - UnityAlgo",
-        data: {
-            account_code: "1000",
-            account_type: "Asset",
-            account_subtype: "Asset",
-            balance: 0,
-        },
-        description: "All assets owned by UnityAlgo",
-        is_group: true,
-        children: [
-            {
-                id: "current-assets-unityalgo",
-                label: "Current Assets - UnityAlgo",
-                data: {
-                    account_code: "1100",
-                    account_type: "Asset",
-                    account_subtype: "Current Asset",
-                    balance: 0,
-                },
-                description: "Assets that can be converted to cash within one year",
-                is_group: true,
-                children: [
-                    {
-                        id: "cash-equivalents-unityalgo",
-                        label: "Cash and Cash Equivalents - UnityAlgo",
-                        data: {
-                            account_code: "1110",
-                            account_type: "Asset",
-                            account_subtype: "Current Asset",
-                            balance: 0,
-                        },
-                        description: "All cash accounts and equivalents",
-                        is_group: true,
-                        children: [
-                            {
-                                id: "cash-operating-unityalgo",
-                                label: "Cash - Operating Account - UnityAlgo",
-                                data: {
-                                    account_code: "1111",
-                                    account_type: "Asset",
-                                    account_subtype: "Current Asset",
-                                    balance: 50000,
-                                },
-                                description: "Primary operating bank account",
-                                is_group: false,
-                            },
-                            {
-                                id: "cash-savings-unityalgo",
-                                label: "Cash - Savings Account - UnityAlgo",
-                                data: {
-                                    account_code: "1112",
-                                    account_type: "Asset",
-                                    account_subtype: "Current Asset",
-                                    balance: 25000,
-                                },
-                                description: "Business savings account",
-                                is_group: false,
-                            },
-                            {
-                                id: "petty-cash-unityalgo",
-                                label: "Petty Cash - UnityAlgo",
-                                data: {
-                                    account_code: "1113",
-                                    account_type: "Asset",
-                                    account_subtype: "Current Asset",
-                                    balance: 500,
-                                },
-                                description: "Small cash fund for minor expenses",
-                                is_group: false,
-                            },
-                        ],
-                    },
-                    {
-                        id: "accounts-receivable-unityalgo",
-                        label: "Accounts Receivable - UnityAlgo",
-                        data: {
-                            account_code: "1120",
-                            account_type: "Asset",
-                            account_subtype: "Current Asset",
-                            balance: 12000,
-                        },
-                        description: "Amounts owed to UnityAlgo by customers",
-                        is_group: false,
-                    },
-                    {
-                        id: "inventory-unityalgo",
-                        label: "Inventory - UnityAlgo",
-                        data: {
-                            account_code: "1130",
-                            account_type: "Asset",
-                            account_subtype: "Current Asset",
-                            balance: 8000,
-                        },
-                        description: "Goods available for sale",
-                        is_group: false,
-                    },
-                    {
-                        id: "prepaid-expenses-unityalgo",
-                        label: "Prepaid Expenses - UnityAlgo",
-                        data: {
-                            account_code: "1140",
-                            account_type: "Asset",
-                            account_subtype: "Current Asset",
-                            balance: 2000,
-                        },
-                        description: "Expenses paid in advance",
-                        is_group: false,
-                    },
-                ],
-            },
-            {
-                id: "fixed-assets-unityalgo",
-                label: "Fixed Assets - UnityAlgo",
-                data: {
-                    account_code: "1200",
-                    account_type: "Asset",
-                    account_subtype: "Fixed Asset",
-                    balance: 0,
-                },
-                description: "Long-term assets owned by UnityAlgo",
-                is_group: true,
-                children: [
-                    {
-                        id: "property-unityalgo",
-                        label: "Property - UnityAlgo",
-                        data: {
-                            account_code: "1210",
-                            account_type: "Asset",
-                            account_subtype: "Fixed Asset",
-                            balance: 100000,
-                        },
-                        description: "Land and buildings owned",
-                        is_group: false,
-                    },
-                    {
-                        id: "equipment-unityalgo",
-                        label: "Equipment - UnityAlgo",
-                        data: {
-                            account_code: "1220",
-                            account_type: "Asset",
-                            account_subtype: "Fixed Asset",
-                            balance: 35000,
-                        },
-                        description: "Machinery and equipment",
-                        is_group: false,
-                    },
-                    {
-                        id: "vehicles-unityalgo",
-                        label: "Vehicles - UnityAlgo",
-                        data: {
-                            account_code: "1230",
-                            account_type: "Asset",
-                            account_subtype: "Fixed Asset",
-                            balance: 15000,
-                        },
-                        description: "Company vehicles",
-                        is_group: false,
-                    },
-                ],
-            },
-        ],
-    },
-    {
-        id: "liabilities-unityalgo",
-        label: "Liabilities - UnityAlgo",
-        data: {
-            account_code: "2000",
-            account_type: "Liability",
-            account_subtype: "Liability",
-            balance: 0,
-        },
-        description: "All liabilities owed by UnityAlgo",
-        is_group: true,
-        children: [
-            {
-                id: "current-liabilities-unityalgo",
-                label: "Current Liabilities - UnityAlgo",
-                data: {
-                    account_code: "2100",
-                    account_type: "Liability",
-                    account_subtype: "Current Liability",
-                    balance: 0,
-                },
-                description: "Liabilities due within one year",
-                is_group: true,
-                children: [
-                    {
-                        id: "accounts-payable-unityalgo",
-                        label: "Accounts Payable - UnityAlgo",
-                        data: {
-                            account_code: "2110",
-                            account_type: "Liability",
-                            account_subtype: "Current Liability",
-                            balance: 9000,
-                        },
-                        description: "Amounts owed to suppliers",
-                        is_group: false,
-                    },
-                    {
-                        id: "accrued-expenses-unityalgo",
-                        label: "Accrued Expenses - UnityAlgo",
-                        data: {
-                            account_code: "2120",
-                            account_type: "Liability",
-                            account_subtype: "Current Liability",
-                            balance: 3000,
-                        },
-                        description: "Expenses incurred but not yet paid",
-                        is_group: false,
-                    },
-                ],
-            },
-            {
-                id: "long-term-liabilities-unityalgo",
-                label: "Long-term Liabilities - UnityAlgo",
-                data: {
-                    account_code: "2200",
-                    account_type: "Liability",
-                    account_subtype: "Long-term Liability",
-                    balance: 0,
-                },
-                description: "Liabilities due after one year",
-                is_group: true,
-                children: [
-                    {
-                        id: "bank-loan-unityalgo",
-                        label: "Bank Loan - UnityAlgo",
-                        data: {
-                            account_code: "2210",
-                            account_type: "Liability",
-                            account_subtype: "Long-term Liability",
-                            balance: 40000,
-                        },
-                        description: "Long-term bank loan",
-                        is_group: false,
-                    },
-                ],
-            },
-        ],
-    },
-    {
-        id: "equity-unityalgo",
-        label: "Equity - UnityAlgo",
-        data: {
-            account_code: "3000",
-            account_type: "Equity",
-            account_subtype: "Equity",
-            balance: 0,
-        },
-        description: "Owner's equity accounts",
-        is_group: true,
-        children: [
-            {
-                id: "owner-capital-unityalgo",
-                label: "Owner's Capital - UnityAlgo",
-                data: {
-                    account_code: "3100",
-                    account_type: "Equity",
-                    account_subtype: "Equity",
-                    balance: 100000,
-                },
-                description: "Owner's investment in the business",
-                is_group: false,
-            },
-            {
-                id: "retained-earnings-unityalgo",
-                label: "Retained Earnings - UnityAlgo",
-                data: {
-                    account_code: "3200",
-                    account_type: "Equity",
-                    account_subtype: "Equity",
-                    balance: 20000,
-                },
-                description: "Cumulative net income retained in the business",
-                is_group: false,
-            },
-        ],
-    },
-];
+// const tempData: TypeTreeNode[] = [
+//     {
+//         id: "assets-unityalgo",
+//         label: "Assets - UnityAlgo",
+//         data: {
+//             account_code: "1000",
+//             account_type: "Asset",
+//             account_subtype: "Asset",
+//             balance: 0,
+//         },
+//         description: "All assets owned by UnityAlgo",
+//         is_group: true,
+//         children: [
+//             {
+//                 id: "current-assets-unityalgo",
+//                 label: "Current Assets - UnityAlgo",
+//                 data: {
+//                     account_code: "1100",
+//                     account_type: "Asset",
+//                     account_subtype: "Current Asset",
+//                     balance: 0,
+//                 },
+//                 description: "Assets that can be converted to cash within one year",
+//                 is_group: true,
+//                 children: [
+//                     {
+//                         id: "cash-equivalents-unityalgo",
+//                         label: "Cash and Cash Equivalents - UnityAlgo",
+//                         data: {
+//                             account_code: "1110",
+//                             account_type: "Asset",
+//                             account_subtype: "Current Asset",
+//                             balance: 0,
+//                         },
+//                         description: "All cash accounts and equivalents",
+//                         is_group: true,
+//                         children: [
+//                             {
+//                                 id: "cash-operating-unityalgo",
+//                                 label: "Cash - Operating Account - UnityAlgo",
+//                                 data: {
+//                                     account_code: "1111",
+//                                     account_type: "Asset",
+//                                     account_subtype: "Current Asset",
+//                                     balance: 50000,
+//                                 },
+//                                 description: "Primary operating bank account",
+//                                 is_group: false,
+//                             },
+//                             {
+//                                 id: "cash-savings-unityalgo",
+//                                 label: "Cash - Savings Account - UnityAlgo",
+//                                 data: {
+//                                     account_code: "1112",
+//                                     account_type: "Asset",
+//                                     account_subtype: "Current Asset",
+//                                     balance: 25000,
+//                                 },
+//                                 description: "Business savings account",
+//                                 is_group: false,
+//                             },
+//                             {
+//                                 id: "petty-cash-unityalgo",
+//                                 label: "Petty Cash - UnityAlgo",
+//                                 data: {
+//                                     account_code: "1113",
+//                                     account_type: "Asset",
+//                                     account_subtype: "Current Asset",
+//                                     balance: 500,
+//                                 },
+//                                 description: "Small cash fund for minor expenses",
+//                                 is_group: false,
+//                             },
+//                         ],
+//                     },
+//                     {
+//                         id: "accounts-receivable-unityalgo",
+//                         label: "Accounts Receivable - UnityAlgo",
+//                         data: {
+//                             account_code: "1120",
+//                             account_type: "Asset",
+//                             account_subtype: "Current Asset",
+//                             balance: 12000,
+//                         },
+//                         description: "Amounts owed to UnityAlgo by customers",
+//                         is_group: false,
+//                     },
+//                     {
+//                         id: "inventory-unityalgo",
+//                         label: "Inventory - UnityAlgo",
+//                         data: {
+//                             account_code: "1130",
+//                             account_type: "Asset",
+//                             account_subtype: "Current Asset",
+//                             balance: 8000,
+//                         },
+//                         description: "Goods available for sale",
+//                         is_group: false,
+//                     },
+//                     {
+//                         id: "prepaid-expenses-unityalgo",
+//                         label: "Prepaid Expenses - UnityAlgo",
+//                         data: {
+//                             account_code: "1140",
+//                             account_type: "Asset",
+//                             account_subtype: "Current Asset",
+//                             balance: 2000,
+//                         },
+//                         description: "Expenses paid in advance",
+//                         is_group: false,
+//                     },
+//                 ],
+//             },
+//             {
+//                 id: "fixed-assets-unityalgo",
+//                 label: "Fixed Assets - UnityAlgo",
+//                 data: {
+//                     account_code: "1200",
+//                     account_type: "Asset",
+//                     account_subtype: "Fixed Asset",
+//                     balance: 0,
+//                 },
+//                 description: "Long-term assets owned by UnityAlgo",
+//                 is_group: true,
+//                 children: [
+//                     {
+//                         id: "property-unityalgo",
+//                         label: "Property - UnityAlgo",
+//                         data: {
+//                             account_code: "1210",
+//                             account_type: "Asset",
+//                             account_subtype: "Fixed Asset",
+//                             balance: 100000,
+//                         },
+//                         description: "Land and buildings owned",
+//                         is_group: false,
+//                     },
+//                     {
+//                         id: "equipment-unityalgo",
+//                         label: "Equipment - UnityAlgo",
+//                         data: {
+//                             account_code: "1220",
+//                             account_type: "Asset",
+//                             account_subtype: "Fixed Asset",
+//                             balance: 35000,
+//                         },
+//                         description: "Machinery and equipment",
+//                         is_group: false,
+//                     },
+//                     {
+//                         id: "vehicles-unityalgo",
+//                         label: "Vehicles - UnityAlgo",
+//                         data: {
+//                             account_code: "1230",
+//                             account_type: "Asset",
+//                             account_subtype: "Fixed Asset",
+//                             balance: 15000,
+//                         },
+//                         description: "Company vehicles",
+//                         is_group: false,
+//                     },
+//                 ],
+//             },
+//         ],
+//     },
+//     {
+//         id: "liabilities-unityalgo",
+//         label: "Liabilities - UnityAlgo",
+//         data: {
+//             account_code: "2000",
+//             account_type: "Liability",
+//             account_subtype: "Liability",
+//             balance: 0,
+//         },
+//         description: "All liabilities owed by UnityAlgo",
+//         is_group: true,
+//         children: [
+//             {
+//                 id: "current-liabilities-unityalgo",
+//                 label: "Current Liabilities - UnityAlgo",
+//                 data: {
+//                     account_code: "2100",
+//                     account_type: "Liability",
+//                     account_subtype: "Current Liability",
+//                     balance: 0,
+//                 },
+//                 description: "Liabilities due within one year",
+//                 is_group: true,
+//                 children: [
+//                     {
+//                         id: "accounts-payable-unityalgo",
+//                         label: "Accounts Payable - UnityAlgo",
+//                         data: {
+//                             account_code: "2110",
+//                             account_type: "Liability",
+//                             account_subtype: "Current Liability",
+//                             balance: 9000,
+//                         },
+//                         description: "Amounts owed to suppliers",
+//                         is_group: false,
+//                     },
+//                     {
+//                         id: "accrued-expenses-unityalgo",
+//                         label: "Accrued Expenses - UnityAlgo",
+//                         data: {
+//                             account_code: "2120",
+//                             account_type: "Liability",
+//                             account_subtype: "Current Liability",
+//                             balance: 3000,
+//                         },
+//                         description: "Expenses incurred but not yet paid",
+//                         is_group: false,
+//                     },
+//                 ],
+//             },
+//             {
+//                 id: "long-term-liabilities-unityalgo",
+//                 label: "Long-term Liabilities - UnityAlgo",
+//                 data: {
+//                     account_code: "2200",
+//                     account_type: "Liability",
+//                     account_subtype: "Long-term Liability",
+//                     balance: 0,
+//                 },
+//                 description: "Liabilities due after one year",
+//                 is_group: true,
+//                 children: [
+//                     {
+//                         id: "bank-loan-unityalgo",
+//                         label: "Bank Loan - UnityAlgo",
+//                         data: {
+//                             account_code: "2210",
+//                             account_type: "Liability",
+//                             account_subtype: "Long-term Liability",
+//                             balance: 40000,
+//                         },
+//                         description: "Long-term bank loan",
+//                         is_group: false,
+//                     },
+//                 ],
+//             },
+//         ],
+//     },
+//     {
+//         id: "equity-unityalgo",
+//         label: "Equity - UnityAlgo",
+//         data: {
+//             account_code: "3000",
+//             account_type: "Equity",
+//             account_subtype: "Equity",
+//             balance: 0,
+//         },
+//         description: "Owner's equity accounts",
+//         is_group: true,
+//         children: [
+//             {
+//                 id: "owner-capital-unityalgo",
+//                 label: "Owner's Capital - UnityAlgo",
+//                 data: {
+//                     account_code: "3100",
+//                     account_type: "Equity",
+//                     account_subtype: "Equity",
+//                     balance: 100000,
+//                 },
+//                 description: "Owner's investment in the business",
+//                 is_group: false,
+//             },
+//             {
+//                 id: "retained-earnings-unityalgo",
+//                 label: "Retained Earnings - UnityAlgo",
+//                 data: {
+//                     account_code: "3200",
+//                     account_type: "Equity",
+//                     account_subtype: "Equity",
+//                     balance: 20000,
+//                 },
+//                 description: "Cumulative net income retained in the business",
+//                 is_group: false,
+//             },
+//         ],
+//     },
+// ];
 
 const TreeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [state, setState] = useState<TreeState>({
@@ -401,7 +401,7 @@ const TreeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 };
 
 const TreeNode = ({ node }: { node: TypeTreeNode }) => {
-    const { toggleExpanded, toggleSelected, isExpanded, isSelected } = useTreeContext();
+    const { toggleExpanded, isExpanded, isSelected } = useTreeContext();
 
     const expanded = isExpanded(node.id);
     const selected = isSelected(node.id);
@@ -474,7 +474,7 @@ interface TreeViewProps {
     data?: TypeTreeNode[];
 }
 
-const TreeView: React.FC<TreeViewProps> = ({ data = tempData }) => {
+const TreeView: React.FC<TreeViewProps> = ({ data }) => {
     return (
         <TreeProvider>
             <div className="p-4 bg-white">
