@@ -1,4 +1,4 @@
-import { ChevronsUpDown, Search as SearchIcon } from 'lucide-react';
+import { ChevronDown, ChevronsUpDown, Search as SearchIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { cn } from "../../utils/index";
@@ -17,6 +17,7 @@ interface AutoCompleteProps {
     label: string;
     className?: string;
     options?: OptionType[];
+    placeholder: string;
     value?: OptionType | null;
     getOptions?: () => Promise<{ label: string; value: string }[]>;
     onChange?: (option: OptionType | null) => void;
@@ -78,25 +79,27 @@ const AutoComplete: React.FC<AutoCompleteProps> = (props) => {
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild >
                 <button
-                    className={cn('w-full border border-input py-1.5 px-2 rounded text-sm text-left text-gray-600 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2', props.className)}
+                    className={cn('w-full h-9 border  cursor-pointer border-input py-1.5 px-2 rounded text-sm text-left text-gray-600 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2', props.className)}
                     aria-expanded={open}
                 >
                     <div className='flex items-center justify-between gap-2'>
                         <div className='text-sm truncate'>
-                            {selected ? selected.label : props.label || "Select an option"}
+                            {selected ? selected.label : props.placeholder || props.label || "Select an option"}
                         </div>
-                        <ChevronsUpDown className='size-4' />
+
+                        <ChevronDown className='size-4' />
                     </div>
                 </button>
             </PopoverTrigger>
 
+
+
             <PopoverContent
                 style={{ width: "var(--radix-popover-trigger-width)" }}
-                className="p-1"
+                className='shadow-md'
             >
-                <div className="mb-2 flex items-center px-2 border-b border-b-gray-200 ">
-                    <div><SearchIcon className='size-4' /></div>
-                    <input type="text" className='px-2 py-1 w-full outline-none text-sm rounded-md flex-auto' placeholder='Search here'
+                <div className="mb-2 px-1 border-b border-input ">
+                    <input type="text" className='px-2 py-1 w-full outline-none text-sm rounded-md' placeholder='Search here'
                         value={query} onChange={(e) => setQuery(e.target.value)}
                     />
                 </div>
@@ -110,7 +113,7 @@ const AutoComplete: React.FC<AutoCompleteProps> = (props) => {
                                     <Spinner className='mx-auto' />
                                 </div>
                             ) : (
-                                <div className='text-center text-sm text-gray-500'>
+                                <div className='text-center font-medium text-sm py-2'>
                                     No results found
                                 </div>
                             )

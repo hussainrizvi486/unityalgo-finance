@@ -13,15 +13,15 @@ interface ColumnProps {
 
 const Section: React.FC<SectionProps> = React.memo(({ children, label }) => (
     <div className="mb-6 border-b border-gray-300 pb-6 ">
-        <h2 className="text-base font-semibold mb-4">{label}</h2>
-        <div className='flex gap-2'>
+        <h2 className="text-base font-bold mb-4 px-4">{label}</h2>
+        <div className='flex'>
             {children}
         </div>
     </div>
 ));
 
 const Column: React.FC<ColumnProps> = React.memo((props) => (
-    <div className="basis-full">
+    <div className="basis-full px-4">
         {props.children}
     </div>
 ));

@@ -5,10 +5,10 @@ import { Checkbox } from "../ui/checkbox";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { AutoComplete } from "../ui/autocomplete";
 import { Column, Section } from "./components/layout";
-import type { FieldValue, FormValues, FormState, TypeDFLayout, TypeField, TypeDFSection } from "./types";
+import type { FieldValue, FormValues, FormState, TypeField } from "./types";
 import { TableInput } from "../table-input/index";
 import { Button } from "../ui/button";
-
+import { buildLayout } from "./utils.ts";
 
 type DFContextValue = {
     values: FormValues | null | undefined;
@@ -17,6 +17,7 @@ type DFContextValue = {
     isValid?: boolean;
     onSave?: (values: FormValues) => void;
     submitForm?: () => void;
+    title: string;
     triggerSave?: () => void;
     getValues: () => FormValues;
     setValue?: (name: string, value: FieldValue) => void;
@@ -24,6 +25,7 @@ type DFContextValue = {
 }
 
 const DFContext = React.createContext<DFContextValue>({
+    title: "",
     getValues: () => ({}),
     values: {},
     fields: [],
@@ -57,9 +59,10 @@ interface DataFormProviderProps {
     fields: TypeField[];
     onSave?: (values: FormValues) => void;
     values?: FormValues | null;
+    title: string
 }
 
-const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, values, onSave }) => {
+const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, values, onSave, title }) => {
     const formFields: Array<TypeField> = useMemo(() => getFormFields(fields), [fields]);
     const [state, setState] = useState<FormState>(getInitialState(fields, values));
     const [isValid, setIsValid] = useState<boolean>(false);
@@ -200,8 +203,9 @@ const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, v
         setError,
         values,
         state,
+        title,
         isValid
-    }), [fields, handleSave, getValues, setValue, setError, values, state, isValid, submitForm]);
+    }), [fields, handleSave, getValues, setValue, setError, values, state, isValid, submitForm, title]);
 
     return (
         <DFContext.Provider value={contextValue}>
@@ -218,90 +222,35 @@ const useDFContext = () => {
     return context;
 }
 
-export const buildLayout = (fields: TypeField[]) => {
-    const layout: TypeDFLayout = [];
-    const sections: TypeDFSection[] = fields.filter(field => field.sectionBreak)
 
-    if (!sections.length) {
-        const section: TypeDFSection = { label: '' };
-        const columns: TypeField[][] = [[]];
-        let colIndex = 0;
-
-        fields.forEach(field => {
-            if (field.columnBreak) {
-                colIndex += 1;
-                columns.push([]);
-            }
-            else {
-                columns[colIndex].push(field);
-            }
-        })
-
-        section.columns = columns;
-        layout.push(section);
-        return layout;
-    }
-    sections.forEach(section => {
-        const startIndex = fields.findIndex(v => v.name === section.name);
-        const columns: TypeField[][] = [[]];
-        let colIndex = 0;
-
-        for (let i = startIndex + 1; i < fields.length; i++) {
-            const field = fields[i];
-            if (field.sectionBreak) break;
-
-            if (field.columnBreak === true) {
-                colIndex += 1;
-                columns.push([]);
-            } else {
-                columns[colIndex].push(field);
-            }
-        }
-
-        layout.push({
-            columns: columns,
-            label: section.label || "",
-            name: section.name || "",
-        });
-    });
-
-    return layout;
-}
-
-const DataFormTrigger: React.FC<{
-    children: React.ReactNode;
-}> = ({ children }) => {
-
-    const form = useDFContext();
-
-    const handleClick = useCallback(() => {
-        form.triggerSave?.();
-        console.log(form.getValues?.())
-    }, [form]);
-
-    return (
-        <div onClick={handleClick}> {children}</div>
-    );
-};
 
 const DataForm: React.FC = () => {
     const form = useDFContext();
     const formLayout = useMemo(() => buildLayout(form.fields), [form.fields]);
 
     return (<div>
-        {formLayout.map((section, index) => (
-            <Section key={index} label={section.label || ""}>
-                {section.columns?.map(((col, k) => (
-                    <Column key={k} >
-                        {col.map((field) => (
-                            <DFInput field={field} key={field.name} />
-                        ))}
-                    </Column>
-                )))}
-            </Section>
-        ))}
+        <div className="flex justify-between items-center mb-4">
+            <div className="text-2xl font-bold">{form.title}</div>
+            <div>
+                <Button onClick={form.submitForm}>Save</Button>
+            </div>
+        </div>
 
-        <Button onClick={form.submitForm}>Save</Button>
+
+        <div className="border border-input py-4 rounded-md" >
+            {formLayout.map((section, index) => (
+                <Section key={index} label={section.label || ""}>
+                    {section.columns?.map(((col, k) => (
+                        <Column key={k} >
+                            {col.map((field) => (
+                                <DFInput field={field} key={field.name} />
+                            ))}
+                        </Column>
+                    )))}
+                </Section>
+            ))}
+
+        </div>
     </div>)
 }
 
@@ -334,7 +283,7 @@ const DFInput: React.FC<{ field: TypeField }> = React.memo((props) => {
 
     if (field.type === "checkbox") {
         return (
-            <div className="mb-4 ">
+            <div className="mb-4">
                 <div className="flex items-center gap-2">
                     <DFInputField
                         field={field}
@@ -429,7 +378,9 @@ const DFInputField: React.FC<DFInputFieldProps> = React.memo((props) => {
 
     if (field.type == "autocomplete") {
         return (
-            <AutoComplete label={field.label} className={className} onChange={onChange} getOptions={field.getOptions} renderOption={field.renderOption} />
+            <AutoComplete label={field.label} className={className} onChange={onChange} getOptions={field.getOptions} renderOption={field.renderOption} 
+            placeholder={field.placeholder}
+            />
         )
     }
 
@@ -444,7 +395,7 @@ const DFInputField: React.FC<DFInputFieldProps> = React.memo((props) => {
         <Input
             name={field.name}
             className={className}
-            type={field.type === "number" || field.type === "float" || field.type === "currency" ? "number" : "text"}
+            type={field.type}
             onChange={(event) => onChange(event.target.value)}
             onBlur={onBlur}
             defaultValue={value as string || ""}
@@ -453,4 +404,4 @@ const DFInputField: React.FC<DFInputFieldProps> = React.memo((props) => {
     )
 });
 
-export { DataFormProvider, DataForm, DataFormTrigger, DFInputField };
+export { DataFormProvider, DataForm, DFInputField };

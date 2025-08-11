@@ -4,6 +4,7 @@ import type { RouteObject } from "react-router-dom";
 
 const PointOfSale = React.lazy(() => import("./pages/index"));
 const Invoices = React.lazy(() => import("./pages/invoice/index"));
+const InvoiceForm = React.lazy(() => import("./pages/invoice/form"));
 
 const ChartOfAccounts = React.lazy(() => import("@/features/accounting/pages/accounts/list"));
 const AddAccount = React.lazy(() => import("@/features/accounting/pages/accounts/form"));
@@ -27,7 +28,8 @@ export const routes: RouteObject[] = [
         path: "/app",
         element: <Layout />,
         children: [
-            { path: "invoices", element: <Invoices /> },
+            { path: "invoice", element: <Invoices /> },
+            { path: "invoice/new", element: <InvoiceForm /> },
             { path: "accounts/list", element: <ChartOfAccounts /> },
             { path: "accounts/form/new", element: <AddAccount /> },
         ]

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Trash2, X as CloseIcon } from "lucide-react";
 import { Button } from "../ui/button";
-import { buildLayout } from "../data-form/index";
+import { buildLayout } from "../data-form/utils";
 import { useTIContext } from ".";
 import type { TIContextType } from "./types";
 import { Field } from "./field";

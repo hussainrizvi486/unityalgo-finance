@@ -40,7 +40,7 @@ class AccountViewSet(ViewSet):
     def create(self, request, *args, **kwargs):
         serializer = AccountViewSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.create()
-
+            account = serializer.save()
+            print(account)
             return Response(data=serializer.data, status=201)
         return Response(data=serializer.errors, status=400)

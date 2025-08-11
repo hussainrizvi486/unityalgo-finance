@@ -131,18 +131,19 @@ const Form = () => {
         const payload = values;
         payload.company = values.company?.value;
         payload.parent = values.parent?.value;
-        try {
+        console.log(payload);
+        // try {
 
-            const response = await axios.post(SERVER_URL + "api/account/add", payload);
-            console.log("response:", response.data);
-        }
-        catch (error) {
-            const errorValues = error.response.data;
-            Object.keys(errorValues).forEach((key) => {
-                toast.error(errorValues[key])
-                // console.log("Error creating account:", error);
-            })
-        }
+        //     const response = await axios.post(SERVER_URL + "api/account/add", payload);
+        //     console.log("response:", response.data);
+        // }
+        // catch (error) {
+        //     const errorValues = error.response.data;
+        //     Object.keys(errorValues).forEach((key) => {
+        //         toast.error(errorValues[key])
+        //         // console.log("Error creating account:", error);
+        //     })
+        // }
         // console.log("Response:", response);
         // if (response.status !== 201) {
         //     throw new Error("Failed to create account");
