@@ -1,5 +1,7 @@
+import moment from "moment";
 import { DataForm, DataFormProvider } from "../../../../components/data-form";
 import type { TypeField } from "../../../../components/data-form/types";
+import api from "../../../../api";
 
 const fields: Array<TypeField> = [
     {
@@ -11,13 +13,51 @@ const fields: Array<TypeField> = [
     {
         label: "Company",
         name: "company",
-        type: "autocomplete",
+        getOptions: async () => {
+            //  http://127.0.0.1:8000/api/search-link/
+            const response = await api.get("api/search-link/", {
+                params: {
+                    "model": "Company",
+                    "app": "accounting",
+                    "fields": "name"
+                }
+            });
+            return response.data.map((row) => ({
+                label: row.name,
+                value: row.id
+            }));
+
+        }, type: "autocomplete",
+        required: true
     },
     {
         name: "customer",
         type: "autocomplete",
         required: true,
-        label: "Customer"
+
+        label: "Customer",
+        getOptions: async () => {
+            //  http://127.0.0.1:8000/api/search-link/
+            const response = await api.get("api/search-link/", {
+                params: {
+                    "model": "Customer",
+                    "app": "accounting",
+                    "fields": "customer_name"
+                }
+            });
+            return response.data.map((row) => ({
+                label: row.customer_name,
+                value: row.id
+            }));
+        },
+
+        defaultValue: { "label": "Cash Customer", "value": "aba809f6-eed3-4804-9f0c-8bbd315af01f" },
+    },
+    {
+        label: "Remarks",
+        name: "remarks",
+        type: "text",
+        defaultValue: "test"
     },
     {
         label: "",
@@ -28,12 +68,14 @@ const fields: Array<TypeField> = [
     {
         name: "posting_date",
         label: "Posting Date",
+        defaultValue: moment().format("D-MM-YYYY"),
         type: "date",
         required: true
     },
     {
         name: "due_date",
         label: "Payment Due Date",
+        defaultValue: moment().format("D-MM-YYYY"),
         type: "date",
         required: true
     },
@@ -47,25 +89,32 @@ const fields: Array<TypeField> = [
     {
         label: "Is POS",
         name: "is_pos",
+        defaultValue: true,
         type: "checkbox"
     },
-    // {
-    //     name: "pos_profile",
-    //     type: "autocomplete",
-    //     required: true,
-    //     label: "POS Profile"
-    // },
+    {
+        name: "pos_profile",
+        dependsOn: (values) => Boolean(values.is_pos),
+        requiredOn: (values) => Boolean(values.is_pos),
+        type: "autocomplete",
+        label: "POS Profile"
+    },
     {
         label: "Is Return",
         name: "is_return",
+
         type: "checkbox"
     },
-    // {
-    //     name: "return_against",
-    //     type: "autocomplete",
-    //     required: true,
-    //     label: "Return Against"
-    // },
+    {
+        dependsOn: (values) => Boolean(values.is_return),
+        requiredOn: (values) => Boolean(values.is_return),
+        defaultValue: true,
+
+        name: "return_against",
+        type: "autocomplete",
+        required: true,
+        label: "Return Against"
+    },
     {
         label: "Items",
         type: "section",
@@ -76,6 +125,7 @@ const fields: Array<TypeField> = [
         label: "Item",
         type: "table",
         name: "items",
+        required: true,
         fields: [
             {
                 label: "Item",

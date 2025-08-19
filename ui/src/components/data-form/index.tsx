@@ -9,6 +9,9 @@ import type { FieldValue, FormValues, FormState, TypeField } from "./types";
 import { TableInput } from "../table-input/index";
 import { Button } from "../ui/button";
 import { buildLayout } from "./utils.ts";
+// import { FileJsonIcon } from "lucide-react";
+import { Calendar } from "../ui/calender.tsx";
+import { Field } from "./components/field.tsx";
 
 type DFContextValue = {
     values: FormValues | null | undefined;
@@ -38,12 +41,17 @@ const getFormFields = (fields: TypeField[]): TypeField[] => {
 
 const getInitialState = (fields: TypeField[], values?: FormValues | null): FormState => {
     const state: FormState = {};
-
     fields.forEach((field) => {
         let value = values?.[field.name] || field.defaultValue || null;
-        if (!value && field.type === "checkbox") {
+
+        if (["number", "float", "currency", "decimal"].includes(field.type) && (value == null || value == undefined)) {
+            value = 0; // Ensure numeric fields default to 0
+        }
+
+        if ((value == null || value == undefined) && field.type === "checkbox") {
             value = false; // Ensure checkbox defaults to false
         }
+
         state[field.name] = {
             value: value,
             hasError: false,
@@ -60,21 +68,23 @@ interface DataFormProviderProps {
     onSave?: (values: FormValues) => void;
     values?: FormValues | null;
     title: string
+
+}
+
+const isEmpty = (value: FieldValue): boolean => {
+    if (value === null || value === undefined) return true;
+    if (typeof value === 'string') return value.trim() === '';
+    if (typeof value === 'number') return false;
+    if (typeof value === 'boolean') return false;
+    if (Array.isArray(value)) return value.length === 0;
+    return false;
 }
 
 const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, values, onSave, title }) => {
     const formFields: Array<TypeField> = useMemo(() => getFormFields(fields), [fields]);
-    const [state, setState] = useState<FormState>(getInitialState(fields, values));
+    const [state, setState] = useState<FormState>(getInitialState(formFields, values));
     const [isValid, setIsValid] = useState<boolean>(false);
 
-    const isEmpty = useCallback((value: FieldValue): boolean => {
-        if (value === null || value === undefined) return true;
-        if (typeof value === 'string') return value.trim() === '';
-        if (typeof value === 'number') return false;
-        if (typeof value === 'boolean') return false;
-        if (Array.isArray(value)) return value.length === 0;
-        return false;
-    }, []);
 
     const getValues = useCallback((): FormValues => {
         const values: FormValues = {};
@@ -236,6 +246,16 @@ const DataForm: React.FC = () => {
             </div>
         </div>
 
+        form values
+        <div >
+
+            {JSON.stringify(form.getValues(), null, 2)}
+        </div>
+
+        <div>
+
+            {/* <Calendar /> */}
+        </div>
 
         <div className="border border-input py-4 rounded-md" >
             {formLayout.map((section, index) => (
@@ -243,7 +263,7 @@ const DataForm: React.FC = () => {
                     {section.columns?.map(((col, k) => (
                         <Column key={k} >
                             {col.map((field) => (
-                                <DFInput field={field} key={field.name} />
+                                <Field form={form} field={field} key={field.name} />
                             ))}
                         </Column>
                     )))}
@@ -378,8 +398,8 @@ const DFInputField: React.FC<DFInputFieldProps> = React.memo((props) => {
 
     if (field.type == "autocomplete") {
         return (
-            <AutoComplete label={field.label} className={className} onChange={onChange} getOptions={field.getOptions} renderOption={field.renderOption} 
-            placeholder={field.placeholder}
+            <AutoComplete label={field.label} className={className} onChange={onChange} getOptions={field.getOptions} renderOption={field.renderOption}
+                placeholder={field.placeholder}
             />
         )
     }

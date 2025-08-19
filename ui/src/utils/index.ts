@@ -1,13 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { twMerge } from 'tailwind-merge'
+import { twMerge } from 'tailwind-merge';
+import { clsx, type ClassValue } from "clsx"
+
 import * as React from "react"
+
 
 const MOBILE_BREAKPOINT = 768
 
-
-function cn(...args: (string | null | undefined)[]): string {
-    return twMerge(args.filter(String).join(" "));
+const cn = (...inputs: ClassValue[]) => {
+    return twMerge(clsx(inputs))
 }
+
 
 function useIsMobile() {
     const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)

@@ -3,9 +3,12 @@
 /* @source "../node_modules/@my-company/ui-lib"; */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
-/* html {
-    @apply font-poppins;
-} */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap');
+
+
+html {
+    @apply font-sans;
+}
 
 
 input[type='number']::-webkit-outer-spin-button,
@@ -24,11 +27,11 @@ input[type='number'] {
     }
 }
 
-@theme {
+/* @theme {
     --default-border-color: #e0e0e0;
     --color-background: #ffffff;
     --color-sidebar: #f1f1f1;
-    /* --color-sidebar: #ebebeb; */
+     --color-sidebar: #ebebeb; 
     --color-hover-bg: #dccee8;
     --color-muted: #f8f9fa;
     --color-foreground: #333333;
@@ -43,7 +46,52 @@ input[type='number'] {
     --color-input: #d9d9d9;
     --color-ring: #8b5cf6;
     --color-muted-foreground: #6b7280;
-
     --font-poppins: 'Poppins', sans-serif;
     --font-roboto: 'Roboto', sans-serif;
+} */
+
+@theme {
+    --font-sans: 'Geist', sans-serif;
+    --color-accent: #e8e8e8;
+    --color-accent-foreground: #020202;
+    --color-primary: #020202;
+    --color-primary-foreground: #f3f3f3;
+    --color-ring: #a1a1a1;
+    --color-destructive: #cc0000;
+    --color-destructive-foreground: #ffffff;
+    /* --default-border-color: #e5e7eb; */
+
+    /* lighter neutral gray */
+    /* softer sidebar */
+    /* subtle lavender hover */
+    --color-muted: #f3f4f6;
+    --color-hover-bg: #ede9fe;
+    --color-background: #ffffff;
+    --color-sidebar: #f9fafb;
+    --color-foreground: #1f2937;
+    /* stronger contrast text */
+    --color-popover: var(--color-background);
+
+    /* cleaner accent background */
+
+    /* --color-secondary: #f3f4f6; */
+    /* light gray secondary */
+    /* --color-secondary-foreground: #374151; */
+    /* darker gray text */
+
+    /* Status */
+    /* --color-destructive: #c70000;
+    /* red-500 */
+    /* --color-destructive-foreground: #ffffff; */
+    --color-input: #d1d5db;
+    /* subtle input border */
+
+    /* indigo-500 for focus ring */
+    --color-muted-foreground: #6b7280;
+    /* neutral text */
+
+    /* Fonts */
+    --font-poppins: 'Poppins', sans-serif;
+    --font-roboto: 'Roboto', sans-serif;
+
 }

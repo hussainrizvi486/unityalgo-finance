@@ -9,7 +9,11 @@ class SearchLinkAPIView(APIView):
         model_name = self.request.GET.get("model")
         app = self.request.GET.get("app")
         search_fields = self.request.GET.get("fields", "id").split(",")
+
         search_query = self.request.GET.get("query", "").strip()
+
+        if "id" not in search_fields:
+            search_fields.append("id")
 
         if not model_name or not app:
             return Response(

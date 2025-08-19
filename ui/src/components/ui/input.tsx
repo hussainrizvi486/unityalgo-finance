@@ -2,7 +2,7 @@ import * as React from "react"
 import { cn } from "../../utils/index";
 import { decimal } from "../../utils";
 
-type InputType = "decimal" | "percentage" | "int" | "currency" | "string";
+type InputType = "decimal" | "percentage" | "int" | "currency" | "text" | "email" | "password";
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
     name?: string;
     type: InputType;
@@ -11,7 +11,6 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
     onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
     value?: string;
-    defaultValue?: string;
     placeholder?: string;
     disabled?: boolean;
 }
@@ -24,6 +23,10 @@ const formatValue = (value: string, type: InputType): string => {
     if (type === "decimal") {
         return decimal(cleanValue);
     }
+    if (type == "email") {
+        return cleanValue;
+    }
+
     if (type === "percentage") {
         const num = parseFloat(cleanValue);
         return isNaN(num) ? '' : `${num.toFixed(2)}%`;
@@ -36,7 +39,7 @@ const formatValue = (value: string, type: InputType): string => {
         const num = parseFloat(cleanValue);
         return isNaN(num) ? '' : `$${num.toFixed(2)}`;
     }
-    if (type === "string") {
+    if (type === "text") {
         return value;
     }
 
@@ -44,7 +47,7 @@ const formatValue = (value: string, type: InputType): string => {
 }
 
 const parseValue = (value: string, type: InputType): string => {
-    if (type === "string") return value;
+    if (type === "text") return value;
     return value.replace(/[$,%]/g, '');
 }
 
@@ -52,12 +55,12 @@ function getPlaceholder(placeholder: string, type: InputType): string {
     return type === "currency" ? "$0.00" : type === "percentage" ? "0%" : type == "decimal" ? "0.00" : type == "int" ? "0" : placeholder;
 }
 
-// function isNumericType(type: string): boolean {
-//     return ["currency", "percentage", "decimal", "int"].includes(type);
-// }
-
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-    ({ className, type, onChange, onBlur, value, ...props }, ref) => {
+    ({ className, type = "text", onChange, onBlur, value, ...props }, ref) => {
+
+        // if (formatValue(props.defaultValue, type)){ 
+        //     props.defaultValue
+        // }
         const [displayValue, setDisplayValue] = React.useState(
             value ? formatValue(value, type) : ''
         );
@@ -72,7 +75,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
         const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {
             setIsFocused(true);
-            if (type !== "string" && displayValue) {
+            if (type !== "text" && displayValue) {
                 const unformatted = parseValue(displayValue, type);
                 setDisplayValue(unformatted);
                 setTimeout(() => {
@@ -107,7 +110,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 ...event,
                 target: {
                     ...event.target,
-                    value: type === "string" ? inputValue : parseValue(inputValue, type)
+                    value: type === "text" ? inputValue : parseValue(inputValue, type)
                 }
             } as React.ChangeEvent<HTMLInputElement>;
 
@@ -120,7 +123,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
 
                 className={cn(
-                    "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50  focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+                    "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground  border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50  focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
                     // isNumericType(type) ? "text-right" : "",
                     className
                 )}
@@ -128,6 +131,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 {...props}
                 value={displayValue}
                 onChange={handleChange}
+                defaultValue={formatValue(props.defaultValue, type)}
                 placeholder={getPlaceholder(props.placeholder, type)}
                 onFocus={handleFocus}
                 onBlur={handleBlur}
