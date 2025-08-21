@@ -37,7 +37,7 @@ import { Checkbox } from "../components/ui/checkbox"
 // import { TableInput } from "../components/table-input";
 import { Dialog, DialogContent, DialogClose, DialogTrigger } from "../components/ui/dialog";
 
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover_custom";
+import { Popover, PopoverContent, PopoverTrigger, PopoverClose } from "../components/ui/popover_custom";
 
 import { Badge } from "../components/ui/badge";
 import { CounterButton } from "../components/ui/counter-button";
@@ -308,7 +308,7 @@ const DialogDemo = () => {
 
 const PopoverDemo = () => {
     return (
-        <DemoSection title="Popover Component">
+        <DemoSection title="Popver Component">
             <Popover>
                 <PopoverTrigger asChild>
                     <Button variant="outline">
@@ -325,7 +325,9 @@ const PopoverDemo = () => {
                         </p>
                         <div className="flex space-x-2 pt-2">
                             <Button size="sm">Action</Button>
-                            <Button size="sm" variant="outline">Cancel</Button>
+                            <PopoverClose>
+                                <Button size="sm" variant="outline">Cancel</Button>
+                            </PopoverClose>
                         </div>
                     </div>
                 </PopoverContent>

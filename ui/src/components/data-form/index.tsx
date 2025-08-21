@@ -1,16 +1,16 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { cn } from "../../utils";
-import { Input } from "../ui/input";
-import { Checkbox } from "../ui/checkbox";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { AutoComplete } from "../ui/autocomplete";
+// import { Input } from "../ui/input";
+// import { Checkbox } from "../ui/checkbox";
+// import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+// import { AutoComplete } from "../ui/autocomplete";
 import { Column, Section } from "./components/layout";
 import type { FieldValue, FormValues, FormState, TypeField } from "./types";
 import { TableInput } from "../table-input/index";
 import { Button } from "../ui/button";
 import { buildLayout } from "./utils.ts";
 // import { FileJsonIcon } from "lucide-react";
-import { Calendar } from "../ui/calender.tsx";
+// import { Calendar } from "../ui/calender.tsx";
 import { Field } from "./components/field.tsx";
 
 type DFContextValue = {
@@ -97,7 +97,7 @@ const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, v
             if (prev[name]?.value === value) return prev;
             return {
                 ...prev,
-                [name]: { ...prev[name], value: value }
+                [name]: { ...prev[name], value: value, hasError: false, error: "" }
             };
         });
     }, []);
@@ -130,6 +130,7 @@ const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, v
                 }
                 break;
             case "date":
+
                 if (value && !(value instanceof Date) && isNaN(Date.parse(value as string))) {
                     return { isValid: false, message: `${field.label} must be a valid date` };
                 }
@@ -139,7 +140,7 @@ const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, v
     }, []);
 
     const validateField = useCallback((name: string): boolean => {
-        const field = fields.find(f => f.name === name);
+        const field = formFields.find(f => f.name === name);
         const fieldState = state[name];
 
         if (!field || !fieldState) return false;
@@ -170,9 +171,12 @@ const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, v
 
         setError(name, hasError, errorMessage);
         return !hasError;
-    }, [fields, state, isEmpty, validateFieldType, setError]);
+    }, [formFields, state, isEmpty, validateFieldType, setError]);
 
     const handleSave = useCallback(() => {
+        
+
+
         formFields.forEach(field => {
             validateField(field.name);
         });
@@ -191,22 +195,22 @@ const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, v
 
 
     const submitForm = useCallback(() => {
+        console.log(getValues())
         formFields.forEach(field => {
             validateField(field.name);
         });
 
-        if (!isValid) {
-            return;
-        }
+        // if (!isValid) {
+        //     return;
+        // }
 
         const values = getValues();
-        console.log("Submitting form with values:", values);
         onSave?.(values);
     }, [formFields, validateField, isValid, getValues, onSave]);
 
     const contextValue = useMemo(() => ({
         fields: fields,
-        triggerSave: handleSave,
+        // triggerSave: handleSave,
         getValues,
         setValue,
         submitForm,
@@ -274,154 +278,5 @@ const DataForm: React.FC = () => {
     </div>)
 }
 
-const DFInput: React.FC<{ field: TypeField }> = React.memo((props) => {
-    const form = useDFContext();
-    const { field } = props;
-    const fieldState = form.state[field.name];
 
-    const classNames = useMemo(() => {
-        return fieldState?.hasError ? "ring ring-offset-3 ring-destructive" : "";
-    }, [fieldState?.hasError]);
-
-    const handleChange = useCallback((value: FieldValue) => {
-        form?.setValue?.(field.name, value);
-    }, [form, field.name]);
-
-    const handleBlur = useCallback(() => {
-        field.onBlur?.(fieldState?.value);
-    }, [field, fieldState?.value]);
-
-
-    const { dependsOn, requiredOn } = field;
-
-    if (dependsOn && !dependsOn(form.getValues())) {
-        return <></>
-    }
-
-
-    const required: boolean = Boolean(requiredOn ? requiredOn(form.getValues()) : field.required)
-
-    if (field.type === "checkbox") {
-        return (
-            <div className="mb-4">
-                <div className="flex items-center gap-2">
-                    <DFInputField
-                        field={field}
-                        className={classNames}
-                        onBlur={handleBlur}
-                        onChange={handleChange}
-                        value={fieldState?.value}
-                    />
-                    <label htmlFor={field.name} className="text-sm block font-medium">{field.label} </label>
-                </div>
-                {fieldState?.hasError && (
-                    <span className="text-red-500 text-xs mt-1">{fieldState.error}</span>
-                )}
-            </div>
-        )
-    }
-
-    return (
-        <div className="mb-4 ">
-            <label htmlFor={field.name} className="text-sm block mb-2 font-medium">
-                {field.label} {required ? <span className="text-destructive">*</span> : <></>}
-            </label>
-
-            <DFInputField
-                field={field}
-                className={classNames}
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={fieldState?.value}
-            />
-
-            {fieldState?.hasError && (
-                <span className="text-red-500 text-xs mt-1">{fieldState.error}</span>
-            )}
-        </div>
-    )
-});
-
-interface DFInputFieldProps {
-    field: TypeField,
-    className: string,
-    onChange: (value: FieldValue) => void;
-    onBlur: () => void;
-    value: FieldValue;
-}
-
-const DFInputField: React.FC<DFInputFieldProps> = React.memo((props) => {
-    const { field, className, onChange, onBlur, value } = props;
-
-    if (field.type == "checkbox") {
-        return (<Checkbox
-            name={field.name}
-            id={field.name}
-            checked={Boolean(value)}
-            onBlur={onBlur}
-            onCheckedChange={(checked) => onChange(checked)}
-        />)
-    }
-
-
-    if (field.type == "textarea") {
-        return (
-            <textarea name={field.name} className={cn("w-full text-sm p-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary", className)} rows={6}
-                onChange={(event) => onChange(event.target.value)}
-            >
-                {value as string || ""}
-            </textarea>
-        )
-    }
-
-    if (field.type === "select") {
-        return (
-            <Select
-                value={value as string || ""}
-                onValueChange={(val) => onChange(val)}
-            >
-                <SelectTrigger className={cn(className)} onBlur={onBlur}>
-                    <SelectValue placeholder={field.placeholder || "Select"} />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectGroup>
-                        {field.options?.map((option) => (
-                            <SelectItem className="text-sm" key={option.value} value={option.value} >
-                                {option.label}
-                            </SelectItem>
-                        ))}
-                    </SelectGroup>
-                </SelectContent>
-            </Select>
-        );
-    }
-
-    if (field.type == "autocomplete") {
-        return (
-            <AutoComplete label={field.label} className={className} onChange={onChange} getOptions={field.getOptions} renderOption={field.renderOption}
-                placeholder={field.placeholder}
-            />
-        )
-    }
-
-    if (field.type == "custom" && field.component) {
-        return field.component({ form: useDFContext });
-    }
-    if (field.type == "table" && field?.fields?.length) {
-        return <TableInput fields={field.fields} />;
-    }
-
-    return (
-        <Input
-            name={field.name}
-            className={className}
-            type={field.type}
-            onChange={(event) => onChange(event.target.value)}
-            onBlur={onBlur}
-            defaultValue={value as string || ""}
-            placeholder={field.placeholder}
-        />
-    )
-});
-
-export { DataFormProvider, DataForm, DFInputField };
+export { DataFormProvider, DataForm };

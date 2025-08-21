@@ -7,13 +7,12 @@ import type { FieldValue } from "../data-form/types";
 import { cn } from "../../utils/index";
 import { Dialog, DialogContent } from "../ui/dialog";
 import { Field } from "./field";
-import  type { TIContextType, TableInputState, TableInputValues, TIFieldState, TFRowState } from "./types";
+import type { TIContextType, TableInputState, TableInputValues, TIFieldState, TFRowState } from "./types";
 import { Form as EditForm } from "./form";
 
-function getColumnsCSS(count: number): React.CSSProperties {
-    let styles = "2rem 2rem ";
-    styles += `repeat(${count}, 1fr) `;
-    styles += "2rem";
+
+function getColumnsCSS(count: number, minWidth: string = '200px'): React.CSSProperties {
+    const styles = `3rem 3rem repeat(${count}, minmax(${minWidth}, 1fr)) 2rem`;
     return { gridTemplateColumns: styles };
 }
 
@@ -207,7 +206,7 @@ const Header: React.FC = () => {
     const ctx = useTIContext();
     const { fields } = ctx;
     return (
-        <div className="bg-gray-100 border-b border-gray-200">
+        <div className=" border-b border-gray-200">
             <div
                 className="grid items-center h-10"
                 style={getColumnsCSS(fields.length)}
@@ -216,13 +215,14 @@ const Header: React.FC = () => {
                     className="px-3 py-3 flex items-center justify-center border-r border-gray-200 h-full">
                     <Checkbox />
                 </div>
+
                 <div className="px-3 flex items-center justify-center border-r border-gray-200">
-                    <span className="text-sm font-medium text-gray-600">#</span>
+                    <span className="text-sm font-medium">No.</span>
                 </div>
 
                 {fields.map((field) => (
                     <div key={field.name} className="px-3 py-2 border-r border-gray-200 last:border-r-0">
-                        <div className="text-sm font-medium text-gray-700">
+                        <div className="text-sm font-medium">
                             {field.label}
                             {field.required && <span className="text-red-500 ml-1">*</span>}
                         </div>
@@ -313,7 +313,7 @@ const TableInputData: React.FC = () => {
             <div className="flex flex-col items-center text-gray-500">
                 <FileText className="w-12 h-12 mb-2" />
                 <div className="text-sm">No data available</div>
-                <div className="text-xs text-gray-400">Click "Add Row" to get started</div>
+                <div className="text-xs">Click "Add Row" to get started</div>
             </div>
         </div></>
     }

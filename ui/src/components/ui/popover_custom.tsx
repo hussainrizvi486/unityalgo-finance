@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useRef, useState, useCallback, type ReactNode, useEffect } from "react";
+import React, { useRef, useState, useCallback, type ReactNode, useEffect, type ReactElement } from "react";
 import { cn } from "../../utils";
-// import { relativeTimeRounding } from "moment";
 
 type PopoverPosition = 'top' | 'bottom' | 'left' | 'right';
 
 interface PopoverTriggerProps {
-    children: ReactNode;
+    children: ReactElement;
     asChild?: boolean;
 }
 
@@ -101,19 +100,88 @@ interface PopoverContentProps {
     className?: string;
 }
 
-const PopoverContent = (props: PopoverContentProps) => {
+const PopoverContent: React.FC<PopoverContentProps> = (props) => {
     const context = React.useContext(PopoverContext);
-    if (!context.open) return <></>;
+    const [contentPosition, setContentPosition] = useState({ top: 0, left: 0 });
+    const contentRef = useRef<HTMLDivElement>(null);
 
-    const { open, position } = context;
+    const { open, position, triggerRef, offset } = context;
+
+    useEffect(() => {
+        const updatePosition = () => {
+            if (!triggerRef.current || !contentRef.current) return;
+
+            const triggerRect = triggerRef.current.getBoundingClientRect();
+            const contentRect = contentRef.current.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            let top = 0;
+            let left = 0;
+
+            switch (position) {
+                case 'bottom':
+                    top = triggerRect.bottom + offset;
+                    left = triggerRect.left + (triggerRect.width / 2) - (contentRect.width / 2);
+                    break;
+                case 'top':
+                    top = triggerRect.top - contentRect.height - offset;
+                    left = triggerRect.left + (triggerRect.width / 2) - (contentRect.width / 2);
+                    break;
+                case 'right':
+                    top = triggerRect.top + (triggerRect.height / 2) - (contentRect.height / 2);
+                    left = triggerRect.right + offset;
+                    break;
+                case 'left':
+                    top = triggerRect.top + (triggerRect.height / 2) - (contentRect.height / 2);
+                    left = triggerRect.left - contentRect.width - offset;
+                    break;
+            }
+
+            // Adjust for viewport boundaries
+            if (left < offset) {
+                left = offset;
+            } else if (left + contentRect.width > viewportWidth - offset) {
+                left = viewportWidth - contentRect.width - offset;
+            }
+
+            if (top < offset) {
+                top = offset;
+            } else if (top + contentRect.height > viewportHeight - offset) {
+                top = viewportHeight - contentRect.height - offset;
+            }
+
+            setContentPosition({ top, left });
+        };
+
+        if (open) {
+            updatePosition();
+            window.addEventListener('resize', updatePosition);
+            window.addEventListener('scroll', updatePosition);
+
+            return () => {
+                window.removeEventListener('resize', updatePosition);
+                window.removeEventListener('scroll', updatePosition);
+            };
+        }
+    }, [open, position, offset, triggerRef]);
+
+    if (!open) return null;
 
     return (
         <div
+            ref={contentRef}
             data-popover-content
             data-state={open ? "open" : "closed"}
             data-side={position}
+            style={{
+                position: 'fixed',
+                top: contentPosition.top,
+                left: contentPosition.left,
+                // zIndex: 50,
+            }}
             className={cn(
-                "rounded-md border p-4 shadow-md outline-hidden w-80",
+                "rounded-md border p-4 shadow-md outline-hidden w-80 bg-white z-50",
                 "data-[state=open]:animate-in",
                 "data-[state=closed]:animate-out",
                 "data-[state=closed]:fade-out-0",
@@ -131,6 +199,9 @@ const PopoverContent = (props: PopoverContentProps) => {
         </div>
     );
 };
+
+
+
 
 const PopoverTrigger: React.FC<PopoverTriggerProps> = ({
     children
@@ -150,8 +221,7 @@ const PopoverTrigger: React.FC<PopoverTriggerProps> = ({
     return React.cloneElement(React.Children.only(children) as React.ReactElement, {
         ref: (node: HTMLElement) => {
             triggerRef.current = node;
-            // Handle forwarded refs if they exist
-            const originalRef = (children as any).ref;
+            const originalRef = (children as ReactElement & { ref?: any }).ref;
             if (originalRef) {
                 if (typeof originalRef === 'function') {
                     originalRef(node);
@@ -159,6 +229,7 @@ const PopoverTrigger: React.FC<PopoverTriggerProps> = ({
                     originalRef.current = node;
                 }
             }
+
         },
         'data-state': open ? 'open' : 'closed',
         onClick: (e: React.MouseEvent) => {
@@ -172,4 +243,38 @@ const PopoverTrigger: React.FC<PopoverTriggerProps> = ({
     });
 };
 
-export { Popover, PopoverContent, PopoverTrigger }
+
+const PopoverClose: React.FC<PopoverTriggerProps> = (props) => {
+    const context = React.useContext(PopoverContext);
+    const { triggerRef, setOpen, open } = context;
+
+    const handleClose = () => {
+        setOpen(false);
+    }
+
+    return React.cloneElement(React.Children.only(props.children), {
+        ref: (node: HTMLElement) => {
+            triggerRef.current = node;
+            const originalRef = (props.children as ReactElement & { ref?: any }).ref;
+            if (originalRef) {
+                if (typeof originalRef === 'function') {
+                    originalRef(node);
+                } else {
+                    originalRef.current = node;
+                }
+            }
+
+        },
+        'data-state': open ? 'open' : 'closed',
+        onClick: (e: React.MouseEvent) => {
+            handleClose();
+            // Call original onClick if it exists
+            const originalOnClick = (props.children as any).props?.onClick;
+            if (originalOnClick) {
+                originalOnClick(e);
+            }
+        }
+    })
+}
+
+export { Popover, PopoverContent, PopoverTrigger, PopoverClose };

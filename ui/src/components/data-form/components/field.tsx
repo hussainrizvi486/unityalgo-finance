@@ -20,9 +20,8 @@ interface FieldProps {
 const Field: React.FC<FieldProps> = React.memo((props) => {
     const { field, form } = props;
     const state = form.state[field.name];
-    const value = state[field.name]?.value;
+    // const value = state[field.name]?.value;
 
-    console.log(field.name, value, state);
 
     const classNames = useMemo(() => {
         return state?.hasError ? "ring ring-offset-3 ring-destructive" : "";
@@ -65,7 +64,9 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
             </div>
         )
     }
-
+    if (field.type == "table") {
+        return <TableInput fields={field.fields} />;
+    }
     return (
         <div className="mb-4 ">
             <label htmlFor={field.name} className="text-sm block mb-2 font-medium">
@@ -79,6 +80,7 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
                 onChange={handleChange}
                 value={state?.value}
             />
+
 
             {state?.hasError && (
                 <span className="text-red-500 text-xs mt-1">{state.error}</span>
@@ -104,7 +106,7 @@ const FieldInput: React.FC<DFInputFieldProps> = React.memo((props) => {
     const { field, className, onChange, onBlur, value } = props;
 
     if (field.type == "date") {
-        return <DatePicker />
+        return <DatePicker onChange={onChange} name={field.name} value={value} />
     }
 
     if (field.type == "checkbox") {
@@ -163,9 +165,6 @@ const FieldInput: React.FC<DFInputFieldProps> = React.memo((props) => {
     //     return field.component({ form: useDFContext });
     // }
 
-    if (field.type == "table" && field?.fields?.length) {
-        return <TableInput fields={field.fields} />;
-    }
 
     return (
         <Input

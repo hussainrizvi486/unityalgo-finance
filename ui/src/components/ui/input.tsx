@@ -18,6 +18,7 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
 const formatValue = (value: string, type: InputType): string => {
     if (!value || value === '') return '';
 
+
     const cleanValue = value.replace(/[$,%]/g, '');
 
     if (type === "decimal") {
@@ -58,18 +59,16 @@ function getPlaceholder(placeholder: string, type: InputType): string {
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ({ className, type = "text", onChange, onBlur, value, ...props }, ref) => {
 
-        // if (formatValue(props.defaultValue, type)){ 
-        //     props.defaultValue
-        // }
+
         const [displayValue, setDisplayValue] = React.useState(
-            value ? formatValue(value, type) : ''
+            value ? formatValue(String(value), type) : ''
         );
 
 
         const [isFocused, setIsFocused] = React.useState(false);
         React.useEffect(() => {
             if (value !== undefined) {
-                setDisplayValue(isFocused ? parseValue(value, type) : formatValue(value, type));
+                setDisplayValue(isFocused ? parseValue(value, type) : formatValue(String(value), type));
             }
         }, [value, type, isFocused]);
 
@@ -131,7 +130,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 {...props}
                 value={displayValue}
                 onChange={handleChange}
-                defaultValue={formatValue(props.defaultValue, type)}
+                // defaultValue={formatValue(props.defaultValue, type)}
                 placeholder={getPlaceholder(props.placeholder, type)}
                 onFocus={handleFocus}
                 onBlur={handleBlur}

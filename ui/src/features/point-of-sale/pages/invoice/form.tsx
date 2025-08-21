@@ -68,14 +68,14 @@ const fields: Array<TypeField> = [
     {
         name: "posting_date",
         label: "Posting Date",
-        defaultValue: moment().format("D-MM-YYYY"),
+        defaultValue: moment().toDate(),
         type: "date",
         required: true
     },
     {
         name: "due_date",
         label: "Payment Due Date",
-        defaultValue: moment().format("D-MM-YYYY"),
+        defaultValue: moment().toDate(),
         type: "date",
         required: true
     },
@@ -89,7 +89,7 @@ const fields: Array<TypeField> = [
     {
         label: "Is POS",
         name: "is_pos",
-        defaultValue: true,
+        // defaultValue: true,
         type: "checkbox"
     },
     {
@@ -116,7 +116,7 @@ const fields: Array<TypeField> = [
         label: "Return Against"
     },
     {
-        label: "Items",
+        label: "",
         type: "section",
         sectionBreak: true,
         name: "items_section",
@@ -132,12 +132,27 @@ const fields: Array<TypeField> = [
                 placeholder: "Select Item",
                 required: true,
                 name: "item",
+                getOptions: async () => {
+                    //  http://127.0.0.1:8000/api/search-link/
+                    const response = await api.get("api/search-link/", {
+                        params: {
+                            "model": "Product",
+                            "app": "stock",
+                            "fields": "product_name"
+                        }
+                    });
+                    return response.data.map((row) => ({
+                        label: row.product_name,
+                        value: row.id
+                    }));
+                },
                 type: "autocomplete",
             },
             {
                 label: "Quantity",
                 name: "quantity",
                 type: "decimal",
+                defaultValue: 1,
             },
             {
                 label: "Rate",

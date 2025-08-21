@@ -23,7 +23,7 @@ input[type='number'] {
 
 @layer base {
     * {
-        border-color: #ebebeb;
+        border-color: #ebebea;
     }
 }
 
