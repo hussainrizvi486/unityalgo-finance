@@ -1,4 +1,4 @@
-import { FieldValue, FieldState, TypeField } from "@components/data-form/types";
+import type { FieldValue, FieldState, TypeField } from "../data-form/types";
 
 export interface TIFieldState extends FieldState { index: number }
 export interface TFRowState {

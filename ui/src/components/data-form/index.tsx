@@ -174,7 +174,7 @@ const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, v
     }, [formFields, state, isEmpty, validateFieldType, setError]);
 
     const handleSave = useCallback(() => {
-        
+
 
 
         formFields.forEach(field => {
@@ -246,20 +246,14 @@ const DataForm: React.FC = () => {
         <div className="flex justify-between items-center mb-4">
             <div className="text-2xl font-bold">{form.title}</div>
             <div>
-                <Button onClick={form.submitForm}>Save</Button>
+                <Button  onClick={form.submitForm}>Save</Button>
             </div>
         </div>
 
-        form values
-        <div >
-
+        {/* <div >
+            form values
             {JSON.stringify(form.getValues(), null, 2)}
-        </div>
-
-        <div>
-
-            {/* <Calendar /> */}
-        </div>
+        </div> */}
 
         <div className="border border-input py-4 rounded-md" >
             {formLayout.map((section, index) => (

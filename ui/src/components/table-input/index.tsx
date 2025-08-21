@@ -52,7 +52,7 @@ function getInitialState(fields: Array<TypeField>, values: TableInputValues): Ta
 }
 
 const ContextProvider: React.FC<ProviderProps> = (props) => {
-    const values: TableInputValues = props.values || [];
+    const values: TableInputValues = React.useMemo(() => props.values || [], [props.values]);
     const fields = useMemo(() => props.fields, [props.fields]);
 
     const [state, setState] = useState<TableInputState>([]);
@@ -158,7 +158,7 @@ const ContextProvider: React.FC<ProviderProps> = (props) => {
 
     useEffect(() => {
         setState(getInitialState(fields, values));
-    }, [])
+    }, [fields, values])
 
 
     const contextValue = {
@@ -166,10 +166,7 @@ const ContextProvider: React.FC<ProviderProps> = (props) => {
     }
 
 
-    // useEffect(() => {
-    //     console.warn(state)
-    // }, [state])
-
+    console.warn(state)
     return (
         <TIContext.Provider value={contextValue} >
             {props.children}
@@ -188,7 +185,7 @@ const useTIContext = () => {
 }
 
 interface TableInputProps {
-    values: Array<Record<string, FieldValue>> | null;
+    values?: Array<Record<string, FieldValue>> | null;
     fields: Array<TypeField>;
 }
 
@@ -206,7 +203,7 @@ const Header: React.FC = () => {
     const ctx = useTIContext();
     const { fields } = ctx;
     return (
-        <div className=" border-b border-gray-200">
+        <header className="border-b border-gray-200">
             <div
                 className="grid items-center h-10"
                 style={getColumnsCSS(fields.length)}
@@ -233,7 +230,7 @@ const Header: React.FC = () => {
                     <span className="text-sm font-medium text-gray-600"><SettingsIcon className="size-4" /></span>
                 </div>
             </div>
-        </div>
+        </header>
     );
 }
 
@@ -335,25 +332,23 @@ const TableInputData: React.FC = () => {
                         >
 
                             <div
-                                className="px-3 py-3 flex items-center justify-center border-r border-gray-200 h-full">
+                                className="px-3 py-2 flex items-center justify-center border-r border-gray-200 h-full">
                                 <Checkbox onCheckedChange={() => setRowCheck(row.id)} />
                             </div>
 
                             <div
-                                className="px-3 py-3 flex items-center justify-center border-r border-gray-200 h-full">
+                                className="px-3 py-2 flex items-center justify-center border-r border-gray-200 h-full">
                                 <span className="text-sm font-medium rounded-full w-6 h-6 flex items-center justify-center">
                                     {row.index}
                                 </span>
                             </div>
 
                             {fields.map((field, colIndex) => {
-                                // const value = rowState.fields[field.name].value;
-                                console.log()
                                 return (
                                     <div
                                         key={colIndex}
                                         className={cn(
-                                            "px-3 py-2 border-r border-gray-200 last:border-r-0 h-full flex items-center",
+                                            "border-r border-input last:border-r-0 h-full flex items-center",
                                         )}>
                                         <Field field={field} state={rowState} ctx={context} gridUpdate={true} />
                                     </div>

@@ -126,6 +126,7 @@ const fields: Array<TypeField> = [
         type: "table",
         name: "items",
         required: true,
+        defaultValue: [{}],
         fields: [
             {
                 label: "Item",
@@ -163,6 +164,11 @@ const fields: Array<TypeField> = [
                 label: "Amount",
                 name: "amount",
                 type: "decimal",
+            },
+            {
+                label: "Delivery Date",
+                name: "delivery_date",
+                type: "date"
             }
         ]
     },
@@ -206,7 +212,7 @@ const Index = () => {
     console.log(fields)
     return (<div>
 
-        <DataFormProvider fields={fields} title="Sales Invoice">
+        <DataFormProvider fields={fields} title="POS Invoice">
             <DataForm />
         </DataFormProvider>
     </div>)

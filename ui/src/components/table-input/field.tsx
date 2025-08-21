@@ -15,6 +15,7 @@ import {
     SelectValue,
 } from "../ui/select";
 import { cn } from "../../utils/index";
+import { DatePicker } from "../ui/date-picker";
 
 
 interface FieldProps {
@@ -29,7 +30,7 @@ interface FieldProps {
 const Field: React.FC<FieldProps> = (props) => {
     const { field, onBlur, state, ctx } = props;
 
-    const [className, setClassName] = useState<string>("");
+    const [className, setClassName] = useState<string>("h-full w-full");
     const fieldState = state.fields[field.name];
     const value = fieldState.value;
 
@@ -41,11 +42,11 @@ const Field: React.FC<FieldProps> = (props) => {
 
     useEffect(() => {
         if (!fieldState?.hasError) {
-            setClassName("");
+            setClassName("h-full w-full");
             return;
         }
 
-        setClassName("ring-2 ring-red-500 ring-offset-2");
+        setClassName("border-ring ring-[3px] ring-destructive ");
 
     }, [fieldState?.hasError]);
 
@@ -110,7 +111,7 @@ const Field: React.FC<FieldProps> = (props) => {
                 className={className}
                 onChange={handleChange}
                 options={field.options}
-                defaultValue={value as OptionType}
+                value={value as OptionType}
                 getOptions={field.getOptions}
                 renderOption={field.renderOption}
             />
@@ -123,16 +124,18 @@ const Field: React.FC<FieldProps> = (props) => {
 
     if (field.type == "date") {
         return (
-            <Input
-                name={field.name}
-                className={className}
-                type="date"
-                defaultValue={value as string || ""}
-                onChange={(event) => handleChange?.(event.target.value)}
+            <DatePicker onChange={handleChange} name={field.name} value={value as Date | null} />
 
-                onBlur={(event) => onBlur?.(event.target.value)}
-                placeholder={field.placeholder}
-            />
+            // <
+            //     name={field.name}
+            //     className={className}
+            //     // type="date"
+            //     defaultValue={value as string || ""}
+            //     onChange={(event) => handleChange?.(event.target.value)}
+
+            //     onBlur={(event) => onBlur?.(event.target.value)}
+            //     placeholder={field.placeholder}
+            // />
         )
     }
     return (

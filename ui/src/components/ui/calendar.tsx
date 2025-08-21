@@ -220,7 +220,7 @@ function CalendarDayButton({
     const defaultClassNames = getDefaultClassNames()
 
     const ref = React.useRef<HTMLButtonElement>(null)
-    
+
     // Fix: Properly handle focus effect
     React.useEffect(() => {
         if (modifiers.focused) {
@@ -230,7 +230,7 @@ function CalendarDayButton({
 
     // Add console.log to verify the component is being called
     console.log("CalendarDayButton rendered for:", day.date);
-    
+
     return (
         <Button
             ref={ref}

@@ -17,7 +17,7 @@ interface AutoCompleteProps {
     label: string;
     className?: string;
     options?: OptionType[];
-    placeholder: string;
+    placeholder?: string;
     value?: OptionType | null;
     getOptions?: () => Promise<{ label: string; value: string }[]>;
     onChange?: (option: OptionType | null) => void;

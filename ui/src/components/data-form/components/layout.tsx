@@ -12,8 +12,8 @@ interface ColumnProps {
 }
 
 const Section: React.FC<SectionProps> = React.memo(({ children, label }) => (
-    <div className="mb-6 border-b border-gray-300 pb-6 ">
-        <h2 className="text-base font-bold mb-4 px-4">{label}</h2>
+    <div className="mb-6 pb-6">
+        <h2 className="text-base font-bold mb-4 px-3">{label}</h2>
         <div className='flex'>
             {children}
         </div>
@@ -21,7 +21,7 @@ const Section: React.FC<SectionProps> = React.memo(({ children, label }) => (
 ));
 
 const Column: React.FC<ColumnProps> = React.memo((props) => (
-    <div className="basis-full px-4">
+    <div className="basis-full px-3">
         {props.children}
     </div>
 ));

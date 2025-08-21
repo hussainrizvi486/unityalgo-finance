@@ -76,7 +76,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     </button>
                 </PopoverTrigger>
 
-                <PopoverContent className="p-0" >
+                <PopoverContent className="p-0 max-w-[2u50px]" >
                     <Calendar
                         mode="single"
                         selected={value}

@@ -4,7 +4,7 @@ import { cn } from "../../../utils";
 import { Input } from "../../ui/input";
 import { Checkbox } from "../../ui/checkbox";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
-import { AutoComplete } from "../../ui/autocomplete";
+import { AutoComplete, type OptionType } from "../../ui/autocomplete";
 // import { Column, Section } from "./components/layout";
 import type { FieldValue, FormValues, FormState, TypeField } from "../types";
 import { TableInput } from "../../table-input/index";
@@ -65,7 +65,7 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
         )
     }
     if (field.type == "table") {
-        return <TableInput fields={field.fields} />;
+        return <TableInput fields={field.fields} values={state.value || []} />;
     }
     return (
         <div className="mb-4 ">
@@ -156,7 +156,7 @@ const FieldInput: React.FC<DFInputFieldProps> = React.memo((props) => {
         return (
             <AutoComplete label={field.label} className={className} onChange={onChange} getOptions={field.getOptions} renderOption={field.renderOption}
                 placeholder={field.placeholder}
-                value={value}
+                value={value as OptionType}
             />
         )
     }
