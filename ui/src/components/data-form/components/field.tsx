@@ -10,6 +10,7 @@ import type { FieldValue, FormValues, FormState, TypeField } from "../types";
 import { TableInput } from "../../table-input/index";
 import { Button } from "../ui/button";
 import { DatePicker } from "../../ui/date-picker";
+import { GridForm } from "../../table-input/grid-form";
 
 interface FieldProps {
     field: TypeField;
@@ -20,7 +21,6 @@ interface FieldProps {
 const Field: React.FC<FieldProps> = React.memo((props) => {
     const { field, form } = props;
     const state = form.state[field.name];
-    // const value = state[field.name]?.value;
 
 
     const classNames = useMemo(() => {
@@ -48,7 +48,7 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
     if (field.type === "checkbox") {
         return (
             <div className="mb-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center   gap-2">
                     <FieldInput
                         field={field}
                         className={classNames}
@@ -65,7 +65,7 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
         )
     }
     if (field.type == "table") {
-        return <TableInput fields={field.fields} values={state.value || []} />;
+        return <div className="mb-4"><GridForm fields={field.fields} values={state.value as Record<string, FieldValue>[] || []} />;</div>
     }
     return (
         <div className="mb-4 ">
@@ -93,7 +93,7 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
 
 
 
-interface DFInputFieldProps {
+export interface DFInputFieldProps {
     field: TypeField,
     className: string,
     onChange: (value: FieldValue) => void;
@@ -117,17 +117,6 @@ const FieldInput: React.FC<DFInputFieldProps> = React.memo((props) => {
             onBlur={onBlur}
             onCheckedChange={(checked) => onChange(checked)}
         />)
-    }
-
-
-    if (field.type == "textarea") {
-        return (
-            <textarea name={field.name} className={cn("w-full text-sm p-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary", className)} rows={6}
-                onChange={(event) => onChange(event.target.value)}
-            >
-                {value as string || ""}
-            </textarea>
-        )
     }
 
     if (field.type === "select") {
@@ -160,11 +149,6 @@ const FieldInput: React.FC<DFInputFieldProps> = React.memo((props) => {
             />
         )
     }
-
-    // if (field.type == "custom" && field.component) {
-    //     return field.component({ form: useDFContext });
-    // }
-
 
     return (
         <Input

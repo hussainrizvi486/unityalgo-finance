@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { FileText, Trash2, Settings as SettingsIcon, Pencil as PencilIcon, Satellite } from "lucide-react";
+import { FileText, Trash2, Settings as SettingsIcon, Pencil as PencilIcon, Satellite, Trash2Icon } from "lucide-react";
 import type { TypeField } from "../data-form/types";
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
@@ -8,7 +8,8 @@ import { cn } from "../../utils/index";
 import { Dialog, DialogContent } from "../ui/dialog";
 import { Field } from "./field";
 import type { TIContextType, TableInputState, TableInputValues, TIFieldState, TFRowState } from "./types";
-import { Form as EditForm } from "./form";
+// import { Form as EditForm } from "./mini-form";
+import { ColorWheelIcon } from "@radix-ui/react-icons";
 
 
 function getColumnsCSS(count: number, minWidth: string = '200px'): React.CSSProperties {
@@ -86,58 +87,66 @@ const ContextProvider: React.FC<ProviderProps> = (props) => {
         });
     }, []);
 
-    const setRowCheck = useCallback((id: string, selectAll?: boolean) => {
-        if (selectAll) {
-            return;
-        }
-        setState(prev =>
-            prev.map(row =>
+    const setRowCheck = useCallback((id?: string, selectAll?: boolean) => {
+        console.log(id, selectAll);
+        setState(prev => {
+            if (selectAll) {
+                const allSelected = prev.length > 0 && prev.every(row => row.checked);
+                return prev.map(row => ({ ...row, checked: !allSelected }));
+            }
+
+            if (!id) return prev;
+
+            return prev.map(row =>
                 row.id === id
                     ? { ...row, checked: !row.checked }
                     : row
-            )
-        );
-    }, [])
+            );
+        });
+    }, []);
+
 
     const addRow = (values?: Record<string, FieldValue>) => {
+        const index = state.length + 1;
         const row = {
             fields: {},
-            index: state.length + 1,
+            index: index,
             id: crypto.randomUUID(), checked: false
         } as TFRowState;
 
         fields.forEach((field) => {
             const value = values?.[field.name] || field?.defaultValue;
             row.fields[field.name] = {
-                index: state.length + 1,
+                index: index,
                 value: value,
-                error: "",
                 hasError: false,
                 field: field,
+                error: "",
             };
-
         })
+
         setState((prev) => {
             return [...prev, row];
         });
     };
-
-    const deleteRow = (id: string | Array<string>) => {
-        if (!id) {
-            setState((prev) => {
-                const updated = prev.filter(row => !row.checked);
-                return [...updated];
-            })
-            setEditingRow(null);
-            return;
-        }
+    const deleteRow = (id?: string | string[]) => {
+        console.log("deleteRow", id);
 
         setState((prev) => {
-            const updated = prev.filter(row => row.id != id).map((row, index) => ({ ...row, index: index + 1 }));
-            return [...updated];
-        })
+            let updated: TFRowState[];
+
+            if (!id) {
+                updated = prev.filter(row => !row.checked);
+            } else if (Array.isArray(id)) {
+                updated = prev.filter(row => !id.includes(row.id));
+            } else {
+                updated = prev.filter(row => row.id !== id);
+            }
+            return updated.map((row, index) => ({ ...row, index: index + 1 }));
+        });
+
         setEditingRow(null);
-    }
+    };
 
 
     const getValues = (): TableInputValues => {
@@ -152,9 +161,12 @@ const ContextProvider: React.FC<ProviderProps> = (props) => {
             values.push(rowValues);
         });
         return values;
-
     }
 
+    const allRowsSelected = useMemo(() =>
+        state.length > 0 && state.every(row => row.checked),
+        [state]
+    );
 
     useEffect(() => {
         setState(getInitialState(fields, values));
@@ -162,7 +174,7 @@ const ContextProvider: React.FC<ProviderProps> = (props) => {
 
 
     const contextValue = {
-        setRowCheck, setValue, getValues, state, editingRow, setEditingRow, deleteRow, fields, values: props.values, addRow
+        setRowCheck, setValue, getValues, state, editingRow, setEditingRow, deleteRow, fields, values: props.values, addRow, allRowsSelected
     }
 
 
@@ -200,17 +212,17 @@ const TableInput: React.FC<TableInputProps> = (props) => {
 
 
 const Header: React.FC = () => {
-    const ctx = useTIContext();
-    const { fields } = ctx;
+    const ctx = useTIContext()
+    const { fields, allRowsSelected } = ctx;
     return (
-        <header className="border-b border-gray-200">
+        <header className="border-b bg-gray-200">
             <div
                 className="grid items-center h-10"
                 style={getColumnsCSS(fields.length)}
             >
                 <div
                     className="px-3 py-3 flex items-center justify-center border-r border-gray-200 h-full">
-                    <Checkbox />
+                    <Checkbox onCheckedChange={() => ctx.setRowCheck(undefined, true)} checked={allRowsSelected} />
                 </div>
 
                 <div className="px-3 flex items-center justify-center border-r border-gray-200">
@@ -219,8 +231,8 @@ const Header: React.FC = () => {
 
                 {fields.map((field) => (
                     <div key={field.name} className="px-3 py-2 border-r border-gray-200 last:border-r-0">
-                        <div className="text-sm font-medium">
-                            {field.label}
+                        <div className="text-sm ">
+                            <span className="font-medium">{field.label}</span>
                             {field.required && <span className="text-red-500 ml-1">*</span>}
                         </div>
                     </div>
@@ -236,9 +248,7 @@ const Header: React.FC = () => {
 
 const TableInputMain = () => {
     const context = useTIContext();
-
     const { addRow, editingRow, state, deleteRow } = context;
-
     function handleAddRow() { addRow(); }
 
     const [openRow, setOpenRow] = useState<boolean>(false);
@@ -266,18 +276,19 @@ const TableInputMain = () => {
             <div className="flex items-center">
                 <div className="flex gap-2 items-center">
                     {state.filter(row => row.checked).length > 0 ?
-                        <Button size="sm" variant="destructive"
+                        <Button variant="destructive"
                             onClick={() => deleteRow(state.filter(row => row.checked).map(row => row.id))}>
+                            <Trash2Icon />
                             Delete
                         </Button>
 
                         : <></>}
 
-                    <Button onClick={handleAddRow} size="sm">Add Row</Button>
+                    <Button onClick={handleAddRow} >Add Row</Button>
                 </div>
             </div>
 
-            <Dialog open={openRow} onOpenChange={(value) => {
+            {/* <Dialog open={openRow} onOpenChange={(value) => {
                 if (!value) {
                     context.setEditingRow(null);
                 }
@@ -286,13 +297,10 @@ const TableInputMain = () => {
                 <DialogContent className="sm:max-w-4xl w-full"  >
                     <EditForm />
                 </DialogContent>
-            </Dialog >
+            </Dialog > */}
         </>
     )
 }
-
-
-
 
 const TableInputData: React.FC = () => {
     const context = useTIContext();
@@ -333,7 +341,7 @@ const TableInputData: React.FC = () => {
 
                             <div
                                 className="px-3 py-2 flex items-center justify-center border-r border-gray-200 h-full">
-                                <Checkbox onCheckedChange={() => setRowCheck(row.id)} />
+                                <Checkbox onCheckedChange={() => setRowCheck(row.id)} checked={rowState.checked} />
                             </div>
 
                             <div
@@ -349,6 +357,7 @@ const TableInputData: React.FC = () => {
                                         key={colIndex}
                                         className={cn(
                                             "border-r border-input last:border-r-0 h-full flex items-center",
+                                            field.type === "checkbox" && "justify-center"
                                         )}>
                                         <Field field={field} state={rowState} ctx={context} gridUpdate={true} />
                                     </div>

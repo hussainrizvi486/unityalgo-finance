@@ -6,7 +6,7 @@ import { cn } from "../../utils";
 // import { AutoComplete } from "../ui/autocomplete";
 import { Column, Section } from "./components/layout";
 import type { FieldValue, FormValues, FormState, TypeField } from "./types";
-import { TableInput } from "../table-input/index";
+// import { TableInput } from "../table-input/index";
 import { Button } from "../ui/button";
 import { buildLayout } from "./utils.ts";
 // import { FileJsonIcon } from "lucide-react";
@@ -21,7 +21,6 @@ type DFContextValue = {
     onSave?: (values: FormValues) => void;
     submitForm?: () => void;
     title: string;
-    triggerSave?: () => void;
     getValues: () => FormValues;
     setValue?: (name: string, value: FieldValue) => void;
     setError?: (name: string, hasError?: boolean, message?: string) => void;
@@ -71,7 +70,7 @@ interface DataFormProviderProps {
 
 }
 
-const isEmpty = (value: FieldValue): boolean => {
+export const isEmpty = (value: FieldValue): boolean => {
     if (value === null || value === undefined) return true;
     if (typeof value === 'string') return value.trim() === '';
     if (typeof value === 'number') return false;
@@ -246,7 +245,7 @@ const DataForm: React.FC = () => {
         <div className="flex justify-between items-center mb-4">
             <div className="text-2xl font-bold">{form.title}</div>
             <div>
-                <Button  onClick={form.submitForm}>Save</Button>
+                <Button onClick={form.submitForm}>Save</Button>
             </div>
         </div>
 

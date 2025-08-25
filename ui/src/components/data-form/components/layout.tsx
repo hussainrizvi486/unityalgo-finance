@@ -21,7 +21,7 @@ const Section: React.FC<SectionProps> = React.memo(({ children, label }) => (
 ));
 
 const Column: React.FC<ColumnProps> = React.memo((props) => (
-    <div className="basis-full px-3">
+    <div className="basis-full px-3 min-w-0">
         {props.children}
     </div>
 ));

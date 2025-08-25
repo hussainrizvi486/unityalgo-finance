@@ -1,4 +1,4 @@
-import { CheckIcon, ChevronDown, ChevronsUpDown, Search as SearchIcon } from 'lucide-react';
+import { CheckIcon, ChevronDown, ChevronsUpDown } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { cn } from "../../utils/index";
@@ -84,7 +84,7 @@ const AutoComplete: React.FC<AutoCompleteProps> = (props) => {
     }, [])
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={setOpen} modal={true}>
             <PopoverTrigger asChild >
                 <button
                     className={cn('w-full h-9 border cursor-pointer border-input py-1.5 px-2 rounded-md text-sm text-left outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2', props.className)}
@@ -95,7 +95,7 @@ const AutoComplete: React.FC<AutoCompleteProps> = (props) => {
                             {selected ? selected.label : props.placeholder || props.label || "Select an option"}
                         </div>
 
-                        <ChevronDown className='size-4' />
+                        <ChevronsUpDown className='size-4 shrink-0' />
                     </div>
                 </button>
             </PopoverTrigger>

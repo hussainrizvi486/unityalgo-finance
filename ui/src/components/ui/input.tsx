@@ -49,17 +49,19 @@ const formatValue = (value: string, type: InputType): string => {
 
 const parseValue = (value: string, type: InputType): string => {
     if (type === "text") return value;
-    return value.replace(/[$,%]/g, '');
+    return String(value).replace(/[$,%]/g, '');
 }
 
 function getPlaceholder(placeholder: string, type: InputType): string {
     return type === "currency" ? "$0.00" : type === "percentage" ? "0%" : type == "decimal" ? "0.00" : type == "int" ? "0" : placeholder;
 }
 
+function isNumericType(type: InputType): boolean {
+    return ["currency", "percentage", "decimal", "int"].includes(type);
+}
+
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ({ className, type = "text", onChange, onBlur, value, ...props }, ref) => {
-
-
         const [displayValue, setDisplayValue] = React.useState(
             value ? formatValue(parseValue(String(value), type), type) : ''
         );
@@ -120,7 +122,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 type="text"
                 className={cn(
                     "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground  border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50  focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-                    // isNumericType(type) ? "text-right" : "",
+                    isNumericType(type) && props.readOnly ? "text-right bg-accent" : "",
                     className
                 )}
                 ref={ref}
@@ -130,6 +132,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 placeholder={getPlaceholder(props.placeholder, type)}
                 onFocus={handleFocus}
                 onBlur={handleBlur}
+
             />
         );
     }

@@ -34,10 +34,9 @@ const fields: Array<TypeField> = [
         name: "customer",
         type: "autocomplete",
         required: true,
-
         label: "Customer",
         getOptions: async () => {
-            //  http://127.0.0.1:8000/api/search-link/
+            
             const response = await api.get("api/search-link/", {
                 params: {
                     "model": "Customer",
@@ -102,7 +101,6 @@ const fields: Array<TypeField> = [
     {
         label: "Is Return",
         name: "is_return",
-
         type: "checkbox"
     },
     {
@@ -134,7 +132,6 @@ const fields: Array<TypeField> = [
                 required: true,
                 name: "item",
                 getOptions: async () => {
-                    //  http://127.0.0.1:8000/api/search-link/
                     const response = await api.get("api/search-link/", {
                         params: {
                             "model": "Product",
@@ -164,12 +161,9 @@ const fields: Array<TypeField> = [
                 label: "Amount",
                 name: "amount",
                 type: "decimal",
+                readOnly: true,
             },
-            {
-                label: "Delivery Date",
-                name: "delivery_date",
-                type: "date"
-            }
+
         ]
     },
 
@@ -201,7 +195,7 @@ const fields: Array<TypeField> = [
         label: "Grand Total"
     },
     {
-        name: "Outstanding Amount",
+        name: "outstanding_amount",
         type: "decimal",
         label: "Outstanding Amount"
     }
@@ -209,9 +203,8 @@ const fields: Array<TypeField> = [
 
 
 const Index = () => {
-    console.log(fields)
-    return (<div>
 
+    return (<div>
         <DataFormProvider fields={fields} title="POS Invoice">
             <DataForm />
         </DataFormProvider>

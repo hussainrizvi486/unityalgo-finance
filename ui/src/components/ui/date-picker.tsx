@@ -2,8 +2,7 @@ import type React from "react";
 import { useState } from "react";
 import { Calendar } from "./calender";
 import { ChevronDownIcon, CalendarIcon } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover_custom";
-import { Button } from "./button";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { cn } from "../../utils";
 import moment from "moment";
 
@@ -50,14 +49,15 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     const displayValue = value ? dateFormat(value) : placeholder;
 
     return (
-        <div className={cn("w-full", className)}>
-            <Popover open={open} onOpenChange={setOpen} >
+        <div className={cn("w-full")}>
+            <Popover open={open} onOpenChange={setOpen} modal={true} >
                 <PopoverTrigger asChild>
                     <button
                         disabled={disabled}
                         className={cn(
                             "w-full justify-between text-left font-normal h-9 px-3 border border-input flex items-center rounded-md ",
-                            !value && "text-muted-foreground"
+                            !value && "text-muted-foreground",
+                            className
                         )}
                         aria-label={`${name} date picker`}
                         aria-expanded={open}
@@ -76,7 +76,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
                     </button>
                 </PopoverTrigger>
 
-                <PopoverContent className="p-0 max-w-[2u50px]" >
+                <PopoverContent className="p-0 max-w-[300px]"  align="start">
                     <Calendar
                         mode="single"
                         selected={value}

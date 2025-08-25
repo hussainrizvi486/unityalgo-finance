@@ -18,7 +18,7 @@ import { cn } from "../../utils/index";
 import { DatePicker } from "../ui/date-picker";
 
 
-interface FieldProps {
+export interface FieldProps {
     field: TypeField;
     onChange?: (value: TypeFieldValue) => void;
     onBlur?: (value: TypeFieldValue) => void;
@@ -27,10 +27,12 @@ interface FieldProps {
     ctx: TIContextType
 }
 
+
+
 const Field: React.FC<FieldProps> = (props) => {
     const { field, onBlur, state, ctx } = props;
 
-    const [className, setClassName] = useState<string>("h-full w-full");
+    const [className, setClassName] = useState<string>("h-full w-full shadow-none border-none rounded-none");
     const fieldState = state.fields[field.name];
     const value = fieldState.value;
 
@@ -42,11 +44,10 @@ const Field: React.FC<FieldProps> = (props) => {
 
     useEffect(() => {
         if (!fieldState?.hasError) {
-            setClassName("h-full w-full");
+            setClassName("h-full w-full shadow-none border-none rounded-none");
             return;
         }
-
-        setClassName("border-ring ring-[3px] ring-destructive ");
+        // setClassName("shadow-none border-none rounded-none border-destructive ring-destructive/50 ring-[3px]");
 
     }, [fieldState?.hasError]);
 
@@ -83,8 +84,9 @@ const Field: React.FC<FieldProps> = (props) => {
 
                 value={value as string || ""}
                 onValueChange={(val) => handleChange?.(val)}
+
             >
-                <SelectTrigger className={cn(className)}
+                <SelectTrigger className={cn("shadow-none border-none", className)}
                     onBlur={() => onBlur?.(value)}
                     id={state.id}
                 >
@@ -106,9 +108,8 @@ const Field: React.FC<FieldProps> = (props) => {
     if (field.type === "autocomplete") {
         return (
             <AutoComplete
-
                 label={field.label}
-                className={className}
+                className={cn("border-none shadow-none", className)}
                 onChange={handleChange}
                 options={field.options}
                 value={value as OptionType}
@@ -124,26 +125,19 @@ const Field: React.FC<FieldProps> = (props) => {
 
     if (field.type == "date") {
         return (
-            <DatePicker onChange={handleChange} name={field.name} value={value as Date | null} />
+            <DatePicker onChange={handleChange} name={field.name} value={value as Date | null}
+                className={cn("border-none shadow-none h-full", className)} />
 
-            // <
-            //     name={field.name}
-            //     className={className}
-            //     // type="date"
-            //     defaultValue={value as string || ""}
-            //     onChange={(event) => handleChange?.(event.target.value)}
-
-            //     onBlur={(event) => onBlur?.(event.target.value)}
-            //     placeholder={field.placeholder}
-            // />
         )
     }
     return (
         <Input
             name={field.name}
             id={state.id}
-            className={className}
-            type={field.type === "number" || field.type === "float" || field.type === "currency" ? "number" : "text"}
+            readOnly={field.readOnly}
+            className={cn("border-none shadow-none", className)}
+            // type={field.type === "number" || field.type === "float" || field.type === "currency" ? "number" : "text"}
+            type={field.type}
             onChange={(event) => handleChange?.(event.target.value)}
             onBlur={(event) => onBlur?.(event.target.value)}
             defaultValue={value as string || ""}

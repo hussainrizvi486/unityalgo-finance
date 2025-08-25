@@ -52,18 +52,18 @@ input[type='number'] {
 
 @theme {
     --font-sans: 'Geist', sans-serif;
-    --color-accent: #e8e8e8;
-    --color-accent-foreground: #020202;
+    --color-accent: #f7f7f7;
+    --color-accent-foreground: #2f2f2f;
     --color-primary: #020202;
     --color-primary-foreground: #f3f3f3;
     --color-ring: #a1a1a1;
     --color-destructive: #cc0000;
     --color-destructive-foreground: #ffffff;
-    /* --default-border-color: #e5e7eb; */
+    --color-secondary: #f7f7f7;
+    --color-secondary-foreground: #2f2f2f;
+    --color-muted: #f7f7f7;
+    --color-muted-foreground: #8e8e8e;
 
-    /* lighter neutral gray */
-    /* softer sidebar */
-    /* subtle lavender hover */
     --color-muted: #f3f4f6;
     --color-hover-bg: #ede9fe;
     --color-background: #ffffff;
