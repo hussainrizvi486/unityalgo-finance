@@ -1,7 +1,9 @@
 import moment from "moment";
-import { DataForm, DataFormProvider } from "../../../../components/data-form";
-import type { TypeField } from "../../../../components/data-form/types";
-import api from "../../../../api";
+import { useParams } from "react-router-dom";
+import { DataForm, DataFormProvider } from "@/components/data-form";
+import type { TypeField } from "@/components/data-form/types";
+import api from "@/api";
+import { useQuery } from "@tanstack/react-query";
 
 const fields: Array<TypeField> = [
     {
@@ -14,7 +16,6 @@ const fields: Array<TypeField> = [
         label: "Company",
         name: "company",
         getOptions: async () => {
-            //  http://127.0.0.1:8000/api/search-link/
             const response = await api.get("api/search-link/", {
                 params: {
                     "model": "Company",
@@ -36,7 +37,7 @@ const fields: Array<TypeField> = [
         required: true,
         label: "Customer",
         getOptions: async () => {
-            
+
             const response = await api.get("api/search-link/", {
                 params: {
                     "model": "Customer",
@@ -202,8 +203,24 @@ const fields: Array<TypeField> = [
 ]
 
 
-const Index = () => {
+const useInvoiceQuery = (id: string | null) => {
+    return useQuery({
+        queryKey: ['invoice-detail'],
+        queryFn: async () => {
+            const response = await api.get("api/pos/invoice?id=" + id,);
+            return response.data;
+        },
+        enabled: Boolean(id),
 
+    })
+}
+
+const Index = () => {
+    const params = useParams();
+    const { data } = useInvoiceQuery(params.id);
+
+
+    console.log(params)
     return (<div>
         <DataFormProvider fields={fields} title="POS Invoice">
             <DataForm />

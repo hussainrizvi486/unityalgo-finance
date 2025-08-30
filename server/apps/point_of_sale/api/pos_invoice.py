@@ -17,7 +17,8 @@ class POSInvoiceItemSerializer(serializers.ModelSerializer):
 
 
 class POSInvoiceListSerializer(serializers.ModelSerializer):
-    customer = serializers.CharField(source='customer.customer_name', read_only=True)
+    customer = serializers.CharField(source="customer.customer_name", read_only=True)
+
     class Meta:
         model = POSInvoice
         fields = [
@@ -69,7 +70,6 @@ class POSInvoiceAPIView(APIView):
         id = self.request.GET.get("id")
         if not id:
             return Response({"error": "Invoice ID is required"}, status=400)
-
         try:
             invoice = POSInvoice.objects.get(id=id)
         except POSInvoice.DoesNotExist:

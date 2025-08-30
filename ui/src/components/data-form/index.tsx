@@ -1,16 +1,9 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { cn } from "../../utils";
-// import { Input } from "../ui/input";
-// import { Checkbox } from "../ui/checkbox";
-// import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-// import { AutoComplete } from "../ui/autocomplete";
+
 import { Column, Section } from "./components/layout";
 import type { FieldValue, FormValues, FormState, TypeField } from "./types";
-// import { TableInput } from "../table-input/index";
 import { Button } from "../ui/button";
 import { buildLayout } from "./utils.ts";
-// import { FileJsonIcon } from "lucide-react";
-// import { Calendar } from "../ui/calender.tsx";
 import { Field } from "./components/field.tsx";
 
 type DFContextValue = {

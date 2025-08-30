@@ -21,15 +21,15 @@ export const routes: RouteObject[] = [
         //     // { path: "product/create", element: <ProductForm /> },
         //     // { path: "product/:id", element: <ProductForm /> },
         //     // { path: "order/create", element: <OrderForm /> },
-
         // ]
     },
     {
         path: "/app",
         element: <Layout />,
         children: [
-            { path: "invoice", element: <Invoices /> },
+            { path: "invoice/list", element: <Invoices /> },
             { path: "invoice/new", element: <InvoiceForm /> },
+            { path: "invoice/:id", element: <InvoiceForm /> },
             { path: "accounts/list", element: <ChartOfAccounts /> },
             { path: "accounts/form/new", element: <AddAccount /> },
         ]

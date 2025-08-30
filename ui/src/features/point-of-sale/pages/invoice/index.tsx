@@ -1,7 +1,8 @@
-import type { ColumnDef } from "@tanstack/react-table";
-import { ListView } from "@/components/listview";
-import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import type { ColumnDef } from "@tanstack/react-table";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { ListView } from "@/components/listview/index";
 import { SERVER_URL } from "@/api";
 
 interface TypeInvoice {
@@ -17,29 +18,25 @@ const columns: ColumnDef<TypeInvoice>[] = [
     {
         accessorKey: 'invoice_no',
         header: 'Invoice No',
-        cell: ({ row }) => (
-            <span>#{row.getValue('invoice_no')}</span>
-        ),
+        cell: ({ row }) => {
+            return (
+                <Link to={`/app/invoice/${row.original?.id}`} className="font-medium hover:underline">#{row.getValue('invoice_no')}</Link>
+            )
+        },
     },
-    // {
-    //     accessorKey: 'id',
-    //     header: 'ID',
-    //     cell: ({ row }) => (
-    //         <span className="text-gray-700">{row.getValue('id')}</span>
-    //     ),
-    // },
+
     {
         accessorKey: 'customer',
         header: 'Customer',
         cell: ({ row }) => (
-            <span className="text-gray-900">{row.getValue('customer')}</span>
+            <span>{row.getValue('customer')}</span>
         ),
     },
     {
         accessorKey: 'posting_date',
         header: 'Posting Date',
         cell: ({ row }) => (
-            <span className="text-gray-600">
+            <span >
                 {new Date(row.getValue('posting_date')).toLocaleDateString()}
             </span>
         ),
@@ -101,16 +98,27 @@ const Index = () => {
 
     return (
         <div>
-            <div >
-                <h1>Sales Invoice</h1>
-                <ListView
-                    query={query}
-                    columns={columns}
-                    pageSize={8}
-                    showPagination={true}
-                />
-            </div>
+            <div>
 
+                <div className="flex">
+
+                    <div className="min-w-0 flex-auto">
+                        <header>
+                            <h1 className="font-bold text-lg mb-6">POS Invoice</h1>
+                        </header>
+
+                        <ListView
+                            query={query}
+                            columns={columns}
+                            pageSize={8}
+                            showPagination={true}
+
+                        />
+                    </div>
+                    <div className="min-w-40">
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
