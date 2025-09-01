@@ -7,6 +7,27 @@ import { useQuery } from "@tanstack/react-query";
 import { Spinner } from "@/components/loaders/spinner";
 import { decimal } from "@/utils";
 
+
+function calculateItemTotals(grid, index, dataform) {
+    const row = grid.state.find(row => row.index === index);
+    if (!row) { return; }
+    const { quantity, price } = row.values;
+    const amount = decimal(quantity * price);
+    grid.setValue({ name: "amount", value: amount, id: row.id });
+
+    const totals = grid.state.reduce((acc, row) => {
+        acc.quantity += decimal(row.values.quantity)
+        acc.amount += decimal(row.values.price) * decimal(row.values.quantity);
+        return acc;
+    }, { quantity: 0, amount: 0 })
+
+    console.log("totals", totals);
+
+    dataform.setValue("total_quantity", totals.quantity);
+    dataform.setValue("total_amount", totals.amount);
+    dataform.setValue("grand_total", totals.amount);
+
+}
 const fields: Array<TypeField> = [
     {
         name: "details",
@@ -205,34 +226,7 @@ const fields: Array<TypeField> = [
                 defaultValue: 1,
                 required: true,
                 onChange: ({ grid, name, index, dataform }) => {
-                    // console.warn(dataform )
-
-
-                    const row = grid.state.find(row => row.index === index);
-                    if (!row) {
-                        return;
-                    }
-                    const { quantity, price } = row.values;
-                    // console.log(row);
-                    // console.error(quantity, price);
-                    const amount = decimal(quantity * price);
-                    grid.setValue({ name: "amount", value: amount, id: row.id });
-                    console.log(grid.state)
-                    const totalQuantity = grid.state.reduce((sum, row) => {
-                        return sum + decimal(row.values.quantity);
-                    }, 0);
-                    const totalAmount = grid.state.reduce((total, row) => {
-                        return total + decimal(row.values.amount)
-                    }, 0);
-
-                    if (dataform) {
-
-                        dataform.setValue("total_quantity", totalQuantity);
-                        dataform.setValue("total_amount", totalAmount);
-                    }
-                    // console.error(amount)
-                    // console.log()
-                    // console.log(grid);
+                    calculateItemTotals(grid, index, dataform);
                 }
             },
             {
@@ -240,6 +234,9 @@ const fields: Array<TypeField> = [
                 name: "price",
                 type: "decimal",
                 required: true,
+                onChange: ({ grid, name, index, dataform }) => {
+                    calculateItemTotals(grid, index, dataform);
+                }
                 // min: 0    
             },
             {

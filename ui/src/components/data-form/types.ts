@@ -1,60 +1,91 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export type TypeOption = {
+import type { TypeField as TypeSubField } from "../table-input/types";
+
+export type TypeOption = { label: string; value: string; };
+export type FieldType = "text"
+    | "textarea"
+    | "texteditor"
+    | "number"
+    | "decimal"
+    | "currency"
+    | "date"
+    | "file"
+    | "select"
+    | "checkbox"
+    // | "table"
+    | "autocomplete"
+    | "section"
+    | "column"
+
+
+export type FieldTypeMap = {
+    text: string;
+    number: number;
+    decimal: number;
+    checkbox: boolean;
+    float: number;
+    currency: number;
+    textarea: string;
+    texteditor: string;
+    file: File;
+    date: Date;
+    autocomplete: TypeOption;
+    select: TypeOption;
+    section: never;
+    column: never;
+};
+
+export type FieldValue<T extends FieldType = FieldType> = FieldTypeMap[T] | null | undefined;
+
+export interface TypeField<T = FieldType> {
     label: string;
-    value: string;
+    name: string;
+    placeholder?: string;
+    type: T;
+    required?: boolean;
+    readOnly?: boolean;
+    hidden?: boolean;
+    defaultValue?: FieldValue;
+    options?: TypeOption[];
+    fields?: Array<TypeSubField>;
+
+    sectionBreak?: boolean;
+    columnBreak?: boolean;
+
+    onChange?: (form: TypeDFContext) => void;
+    onBlur?: (form: TypeDFContext) => void;
+    getOptions?: (value?: string) => Promise<TypeOption[]>;
+    renderOption?: () => React.ReactNode;
+
+    dependsOn?: (values: DFValues) => boolean;
+    requiredOn?: (values: DFValues) => boolean;
+    readOnlyOn?: (values: DFValues) => boolean;
 }
 
-export type FieldState = {
+
+
+export type DFValues = {
+    [key: string]: FieldValue;
+}
+
+type TypeFieldState = {
     hasError: boolean;
     error: string;
     value: FieldValue;
     field: TypeField;
 }
 
-export type FormState = Record<string, FieldState>;
-export type FieldType = "text" | "number" | "float" | "currency" | "date" | "file" | "textarea" | "texteditor" | "select" | "checkbox" | "table" | "autocomplete" | "custom" | "section" | "column" | "decimal";
-export type FieldValue = string | number | boolean | File | Date | TypeOption | TypeOption[] | Record<string, any> | null | undefined;
-export type FormValues = Record<string, FieldValue>;
-export type ValidationFunction = (value: FieldValue) => boolean | string;
-
-
-export type DFContextValue = {
-    values: FormValues | null | undefined;
+export type TypeDFState = Record<string, TypeFieldState>;
+export type TypeDFContext = {
+    title: string;
     fields: TypeField[];
-    state: FormState;
+    state: TypeDFState;
+    values?: DFValues;
+
     isValid?: boolean;
-    onSave?: (values: FormValues) => void;
-    triggerSave?: () => void;
-    getValues: () => FormValues;
     setValue?: (name: string, value: FieldValue) => void;
     setError?: (name: string, hasError?: boolean, message?: string) => void;
-}
-
-
-export interface CustomFieldProps {
-    form?: DFContextValue,
-}
-export interface TypeField {
-    name: string;
-    label: string;
-    type: FieldType;
-    required?: boolean;
-    defaultValue?: FieldValue;
-    readOnly?: boolean;
-    options?: TypeOption[];
-    placeholder?: string;
-    sectionBreak?: boolean;
-    columnBreak?: boolean;
-    validate?: ValidationFunction;
-    onChange?: (value: FieldValue) => void;
-    onBlur?: (value: FieldValue) => void;
-    getOptions?: (value?: string) => Promise<TypeOption[]>;
-    renderOption?: () => React.ReactNode;
-    dependsOn?: (values: FormValues) => boolean;
-    requiredOn?: (values: FormValues) => boolean;
-    readOnlyOn?: (values: FormValues) => boolean;
-    component?: (props?: CustomFieldProps) => React.ReactNode;
-    fields?: Array<TypeField>;
+    getValues: () => DFValues;
+    onSave?: (values: DFValues) => void;
 }
 
 
@@ -65,3 +96,4 @@ export type TypeDFSection = {
     columns?: TypeField[][];
 }
 export type TypeDFLayout = Array<TypeDFSection>;
+

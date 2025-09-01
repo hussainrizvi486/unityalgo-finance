@@ -25,9 +25,9 @@ function useIsMobile() {
     return !!isMobile
 }
 
-function decimal(value: any, precision = 2) {
+function decimal(value: any, precision = 2): number {
     const v = isNaN(parseFloat(value)) ? 0 : parseFloat(value);
-    return v.toFixed(precision);
+    return parseFloat(v.toFixed(precision));
 }
 
 function formatCurrency(value: any, currency: string = "USD"): string {

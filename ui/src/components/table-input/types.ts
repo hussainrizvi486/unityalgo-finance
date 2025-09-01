@@ -1,5 +1,5 @@
 import type { DFContextValue } from "../data-form";
-import type { FieldState, TypeOption } from "../data-form/types";
+import type { TypeOption } from "../data-form/types";
 
 export type FieldType =
     | "text"
@@ -10,12 +10,10 @@ export type FieldType =
     | "float"
     | "currency"
     | "checkbox"
-    | "boolean"
     | "file"
     | "date"
     | "autocomplete"
     | "select"
-    | "multiselect"
     | "section"
     | "column";
 
@@ -28,13 +26,10 @@ export type FieldTypeMap = {
     currency: number;
     textarea: string;
     texteditor: string;
-    boolean: boolean;
     file: File;
     date: Date;
     autocomplete: TypeOption;
     select: TypeOption;
-    multiselect: TypeOption[][];
-
     section: never;
     column: never;
 };
@@ -106,36 +101,5 @@ export interface GridFormContextType {
     setExpandedRow: (id?: GridFormRowState | null) => void;
     // setError: (params: { id: string, name: string, message: string }) => void;
 }
-
-
-
-export interface TIFieldState extends FieldState { index: number }
-export interface TFRowState {
-    id: string;
-    index: number;
-    checked?: boolean;
-    fields: { [key: string]: TIFieldState };
-}
-
-export type TableInputState = Array<TFRowState>;
-export type TableInputValues = Array<Record<string, FieldValue>>;
-
-
-export interface TIContextType {
-    allRowsSelected?: boolean;
-    fields: TypeField[];
-    values: Record<string, FieldValue> | null;
-    state: TableInputState;
-    editingRow: string | null;
-    setValue: (params: { name: string; value: FieldValue; id: string }) => void;
-    addRow: () => void;
-    deleteRow: (id?: string | string[]) => void;
-    setEditingRow: (id?: string | null) => void;
-    onChange?: () => void;
-    setRowCheck: (id?: string, selectAll?: boolean) => void;
-    getValues: () => TableInputValues;
-
-}
-
 
 export type TypeFieldValue = FieldValue;

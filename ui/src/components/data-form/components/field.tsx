@@ -6,7 +6,6 @@ import { Checkbox } from "../../ui/checkbox";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { AutoComplete, type OptionType } from "../../ui/autocomplete";
 // import { Column, Section } from "./components/layout";
-import type { FieldValue, FormValues, FormState, TypeField } from "../types";
 // import { TableInput } from "../../table-input/index";
 // import { Button } from "../ui/button";
 import { DatePicker } from "../../ui/date-picker";
@@ -22,9 +21,8 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
     const { field, form } = props;
     const state = form.state[field.name];
 
-
     const classNames = useMemo(() => {
-        return state?.hasError ? "ring ring-offset-3 ring-destructive" : "";
+        return state?.hasError ? "ring-destructive/50 ring-[3px]" : "";
     }, [state?.hasError]);
 
     const handleChange = useCallback((value: FieldValue) => {
@@ -65,7 +63,7 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
         )
     }
     if (field.type == "table") {
-        return <div className="mb-4"><GridForm fields={field.fields} values={state.value as Record<string, FieldValue>[] || []} dataform={form} />;</div>
+        return <div className="mb-4"><GridForm fields={field.fields} values={state.value as Record<string, FieldValue>[] || []} dataform={form} /></div>
     }
     return (
         <div className="mb-4 ">
