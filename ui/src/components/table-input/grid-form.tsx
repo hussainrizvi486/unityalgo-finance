@@ -1,16 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { createContext, use, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { TypeField, GridFormContextType, GridFormState, GridFormValues, GridFormRowState, FieldValue, FieldType } from "./types";
+import { decimal, integer, cn } from "@/utils";
+
 // import type {/ FieldValue } from "react-hook-form";
 import { Checkbox } from "../ui/checkbox";
-import { FileTextIcon, Flashlight, PencilIcon, SettingsIcon, Trash2Icon } from "lucide-react";
+import { FileTextIcon, PencilIcon, SettingsIcon, Trash2Icon } from "lucide-react";
 import { Button } from "../ui/button";
-import { cn } from "../../utils";
+// import {  } from "../../utils";
 import { Field } from "./field";
-import { decimal } from "../../utils";
-import { integer } from "../../utils";
+
 import { MiniForm } from "./mini-form";
-import api from "../../api";
+import api from "@/api";
+import type { DFContextValue } from "../data-form";
 
 export const Demo = () => {
     const fields: Array<TypeField> = [
@@ -58,7 +60,6 @@ export const Demo = () => {
         //     label: "Expense Account",
         //     required: true,
         // },
-
         { name: "rate", label: "Rate", type: "decimal" },
         { name: "amount", label: "Amount", type: "decimal", readOnly: true }
     ]
@@ -74,17 +75,17 @@ export const Demo = () => {
     //     { "item": "c3274622-227b-4dae-84be-2ce9387a2316", "quantity": 3, "rate": 50, "amount": 150 }
     // ]
     // }
+
     return (
         <div className="max-w-6xl mx-auto px-2 py-16">
             <div className="mb-8">
 
             </div>
 
-            <GridForm fields={fields} values={[{}, {}]} />
+            <GridForm fields={fields} />
         </div>
     )
 }
-// 3. Optional: Improve the getColumnsWidth function for better consistency
 const getColumnsWidth = (fields: TypeField[]) => {
     const availableWidth = 9;
     const columns: TypeField[] = [];
@@ -98,11 +99,9 @@ const getColumnsWidth = (fields: TypeField[]) => {
         }
     });
 
-    // Build the grid template with consistent sizing
     const columnSizes = [
         '3rem',
         '3rem',
-        // minmax(0, 1fr)
         ...columns.map(field => `minmax(0, ${field.width || 1}fr)`),
         '2.5rem'
     ];
@@ -118,6 +117,7 @@ const GridFormContext = createContext<GridFormContextType>({
     state: [],
     allRowsSelected: false,
     expandedRow: null,
+    dataform: null,
     getValues: () => [],
     setValue: () => { },
     selectRow: () => { },
@@ -202,7 +202,7 @@ const isEmpty = (value: FieldValue, type: FieldType): boolean => {
     return false;
 }
 
-const GridFormProvider: React.FC<{ children: React.ReactNode, fields: TypeField[], values?: GridFormValues[] }> = (props) => {
+const GridFormProvider: React.FC<{ children: React.ReactNode, fields: TypeField[], values?: GridFormValues[], dataform: DFContextType }> = (props) => {
     const controlFields = useMemo(() => getFields(props.fields), [props.fields]);
     const [state, setState] = useState<GridFormState>([]);
     const [expandedRow, setExpandedRow] = useState<GridFormRowState | null>(null);
@@ -227,44 +227,44 @@ const GridFormProvider: React.FC<{ children: React.ReactNode, fields: TypeField[
     }
 
 
-    const validate = () => {
-        let hasError = false;
+    // const validate = () => {
+    //     let hasError = false;
 
-        const update = state.map(row => {
-            const updatedFields = { ...row.fields };
-            const updatedErrors = { ...row.errors };
+    //     const update = state.map(row => {
+    //         const updatedFields = { ...row.fields };
+    //         const updatedErrors = { ...row.errors };
 
-            Object.keys(row.fields).forEach((key) => {
-                const field = row.fields[key].field;
-                const { message, hasError: error } = validateField({ name: field.name, id: row.id });
+    //         Object.keys(row.fields).forEach((key) => {
+    //             const field = row.fields[key].field;
+    //             const { message, hasError: error } = validateField({ name: field.name, id: row.id });
 
-                if (error) {
-                    hasError = true;
-                    updatedFields[key] = {
-                        ...row.fields[key],
-                        hasError: true,
-                        error: message
-                    };
-                    updatedErrors[key] = message;
-                } else {
-                    updatedFields[key] = {
-                        ...row.fields[key],
-                        hasError: false,
-                        error: ""
-                    };
-                    delete updatedErrors[key];
-                }
-            });
+    //             if (error) {
+    //                 hasError = true;
+    //                 updatedFields[key] = {
+    //                     ...row.fields[key],
+    //                     hasError: true,
+    //                     error: message
+    //                 };
+    //                 updatedErrors[key] = message;
+    //             } else {
+    //                 updatedFields[key] = {
+    //                     ...row.fields[key],
+    //                     hasError: false,
+    //                     error: ""
+    //                 };
+    //                 delete updatedErrors[key];
+    //             }
+    //         });
 
-            return {
-                ...row,
-                fields: updatedFields,
-                errors: updatedErrors
-            };
-        })
+    //         return {
+    //             ...row,
+    //             fields: updatedFields,
+    //             errors: updatedErrors
+    //         };
+    //     })
 
-        setState([...update]);
-    }
+    //     setState([...update]);
+    // }
 
     const addRow = (values?: Record<string, any>) => {
         const row: GridFormRowState = {
@@ -362,13 +362,14 @@ const GridFormProvider: React.FC<{ children: React.ReactNode, fields: TypeField[
     }
 
     const allRowsSelected = useMemo(() => state.length > 0 && state.every(row => row.checked), [state]);
-
+    console.warn(state);
     const contextValues = {
         setError,
         addRow,
         setValue,
         fields: props.fields,
         getValues,
+        dataform: props.dataform,
         removeRow,
         expandedRow,
         setExpandedRow,
@@ -377,8 +378,6 @@ const GridFormProvider: React.FC<{ children: React.ReactNode, fields: TypeField[
         selectRow
     } as GridFormContextType;
 
-
-    console.log(state);
 
 
     const defaultValues: GridFormValues[] = useMemo(() => props.values, [props.values]);
@@ -389,7 +388,6 @@ const GridFormProvider: React.FC<{ children: React.ReactNode, fields: TypeField[
 
     return <GridFormContext.Provider value={contextValues}>
         {props.children}
-
     </GridFormContext.Provider>
 };
 const GridFormHeader = () => {
@@ -440,6 +438,7 @@ type GridFormProps = {
     fields: TypeField[];
     gridContentClass?: string;
     values?: GridFormValues[];
+    dataform: DFContextValue;
 }
 
 const useGridForm = () => {
@@ -451,7 +450,7 @@ const useGridForm = () => {
 const GridForm: React.FC<GridFormProps> = (props) => {
     const hasError = false;
     return (
-        <GridFormProvider fields={props.fields} values={props.values}>
+        <GridFormProvider fields={props.fields} values={props.values} dataform={props.dataform}>
             <div className="">
                 <div className={cn("border rounded-md mb-4", props.gridContentClass, hasError ? "ring-destructive ring-2" : "")}>
                     <GridFormHeader />
@@ -459,11 +458,9 @@ const GridForm: React.FC<GridFormProps> = (props) => {
                 </div>
                 <GridFormFooter />
             </div>
-
         </GridFormProvider>
     )
 }
-// 2. Fix the GridFormBody component - specifically the row rendering
 const GridFormBody = () => {
     const form = useGridForm();
     const { fields, state, selectRow, expandedRow, setExpandedRow } = form;

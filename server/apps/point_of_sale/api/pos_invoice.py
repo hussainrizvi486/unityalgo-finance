@@ -81,6 +81,8 @@ class POSInvoiceAPIView(APIView):
 
 class POSInvoiceDetailSerializer(serializers.ModelSerializer):
     class ItemSerializer(serializers.ModelSerializer):
+        product = serializers.SerializerMethodField()
+
         class Meta:
             model = POSInvoiceItem
             fields = [
@@ -94,13 +96,21 @@ class POSInvoiceDetailSerializer(serializers.ModelSerializer):
                 "id",
             ]
 
+        def get_product(self, object):
+            return {"label": object.product.product_name, "value": object.product.id}
+
     items = ItemSerializer(many=True)
+    customer = serializers.SerializerMethodField()
+
+    def get_customer(self, object):
+        return {"label": object.customer.customer_name, "value": object.customer.id}
 
     class Meta:
         model = POSInvoice
         fields = [
             "id",
             "invoice_no",
+            "posting_date",
             "pos_profile",
             "customer",
             "items",

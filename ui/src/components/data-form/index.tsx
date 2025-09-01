@@ -5,8 +5,9 @@ import type { FieldValue, FormValues, FormState, TypeField } from "./types";
 import { Button } from "../ui/button";
 import { buildLayout } from "./utils.ts";
 import { Field } from "./components/field.tsx";
+import toast from "react-hot-toast";
 
-type DFContextValue = {
+export type DFContextValue = {
     values: FormValues | null | undefined;
     fields: TypeField[];
     state: FormState;
@@ -33,6 +34,8 @@ const getFormFields = (fields: TypeField[]): TypeField[] => {
 
 const getInitialState = (fields: TypeField[], values?: FormValues | null): FormState => {
     const state: FormState = {};
+
+
     fields.forEach((field) => {
         let value = values?.[field.name] || field.defaultValue || null;
 
@@ -51,6 +54,8 @@ const getInitialState = (fields: TypeField[], values?: FormValues | null): FormS
             field: field
         };
     })
+    // console.log(values)
+    // console.warn(state)
     return state
 }
 
@@ -74,6 +79,7 @@ export const isEmpty = (value: FieldValue): boolean => {
 
 const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, values, onSave, title }) => {
     const formFields: Array<TypeField> = useMemo(() => getFormFields(fields), [fields]);
+    
     const [state, setState] = useState<FormState>(getInitialState(formFields, values));
     const [isValid, setIsValid] = useState<boolean>(false);
 
@@ -85,6 +91,7 @@ const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, v
     }, [state]);
 
     const setValue = useCallback((name: string, value: FieldValue) => {
+        console.log(name, value)
         setState((prev) => {
             if (prev[name]?.value === value) return prev;
             return {
@@ -107,6 +114,8 @@ const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, v
             };
         });
     }, []);
+
+
 
     const validateFieldType = useCallback((field: TypeField, value: FieldValue): { isValid: boolean; message: string } => {
         switch (field.type) {
@@ -192,14 +201,18 @@ const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, v
             validateField(field.name);
         });
 
-        // if (!isValid) {
-        //     return;
-        // }
+        if (!isValid) {
+            toast.error("Please fix the errors in the form before submitting.");
+            // return;
+        }
 
         const values = getValues();
         onSave?.(values);
     }, [formFields, validateField, isValid, getValues, onSave]);
 
+    // useEffect(() => {
+    //     setState(getInitialState(formFields, values));
+    // }, [formFields]);
     const contextValue = useMemo(() => ({
         fields: fields,
         // triggerSave: handleSave,
@@ -213,6 +226,7 @@ const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, v
         isValid
     }), [fields, handleSave, getValues, setValue, setError, values, state, isValid, submitForm, title]);
 
+    console.warn(state)
     return (
         <DFContext.Provider value={contextValue}>
             {children}
@@ -241,11 +255,6 @@ const DataForm: React.FC = () => {
                 <Button onClick={form.submitForm}>Save</Button>
             </div>
         </div>
-
-        {/* <div >
-            form values
-            {JSON.stringify(form.getValues(), null, 2)}
-        </div> */}
 
         <div className="border border-input py-4 rounded-md" >
             {formLayout.map((section, index) => (

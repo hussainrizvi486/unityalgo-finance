@@ -1,9 +1,11 @@
 import moment from "moment";
-import { useParams } from "react-router-dom";
+import { data, useParams } from "react-router-dom";
 import { DataForm, DataFormProvider } from "@/components/data-form";
-import type { TypeField } from "@/components/data-form/types";
+import type { TypeField } from "@/components/table-input/types";
 import api from "@/api";
 import { useQuery } from "@tanstack/react-query";
+import { Spinner } from "@/components/loaders/spinner";
+import { decimal } from "@/utils";
 
 const fields: Array<TypeField> = [
     {
@@ -16,19 +18,24 @@ const fields: Array<TypeField> = [
         label: "Company",
         name: "company",
         getOptions: async () => {
-            const response = await api.get("api/search-link/", {
-                params: {
-                    "model": "Company",
-                    "app": "accounting",
-                    "fields": "name"
-                }
-            });
-            return response.data.map((row) => ({
-                label: row.name,
-                value: row.id
-            }));
-
-        }, type: "autocomplete",
+            try {
+                const response = await api.get("api/search-link/", {
+                    params: {
+                        model: "Company",
+                        app: "accounting",
+                        fields: "name"
+                    }
+                });
+                return response.data?.map((row: any) => ({
+                    label: row.name,
+                    value: row.id
+                })) || [];
+            } catch (error) {
+                console.error("Error fetching companies:", error);
+                return [];
+            }
+        },
+        type: "autocomplete",
         required: true
     },
     {
@@ -37,33 +44,39 @@ const fields: Array<TypeField> = [
         required: true,
         label: "Customer",
         getOptions: async () => {
-
-            const response = await api.get("api/search-link/", {
-                params: {
-                    "model": "Customer",
-                    "app": "accounting",
-                    "fields": "customer_name"
-                }
-            });
-            return response.data.map((row) => ({
-                label: row.customer_name,
-                value: row.id
-            }));
+            try {
+                const response = await api.get("api/search-link/", {
+                    params: {
+                        model: "Customer",
+                        app: "accounting",
+                        fields: "customer_name"
+                    }
+                });
+                return response.data?.map((row: any) => ({
+                    label: row.customer_name,
+                    value: row.id
+                })) || [];
+            } catch (error) {
+                console.error("Error fetching customers:", error);
+                return [];
+            }
         },
-
-        defaultValue: { "label": "Cash Customer", "value": "aba809f6-eed3-4804-9f0c-8bbd315af01f" },
+        // defaultValue: {
+        //     label: "Cash Customer",
+        //     value: "aba809f6-eed3-4804-9f0c-8bbd315af01f"
+        // },
     },
     {
         label: "Remarks",
         name: "remarks",
         type: "text",
-        defaultValue: "test"
+        defaultValue: ""
     },
     {
         label: "",
         columnBreak: true,
         type: "column",
-        name: "column_break",
+        name: "column_break_1",
     },
     {
         name: "posting_date",
@@ -75,7 +88,7 @@ const fields: Array<TypeField> = [
     {
         name: "due_date",
         label: "Payment Due Date",
-        defaultValue: moment().toDate(),
+        defaultValue: moment().add(30, 'days').toDate(), // More realistic default
         type: "date",
         required: true
     },
@@ -83,13 +96,11 @@ const fields: Array<TypeField> = [
         label: "",
         columnBreak: true,
         type: "column",
-        name: "column_break",
+        name: "column_break_2",
     },
-
     {
         label: "Is POS",
         name: "is_pos",
-        // defaultValue: true,
         type: "checkbox"
     },
     {
@@ -97,7 +108,25 @@ const fields: Array<TypeField> = [
         dependsOn: (values) => Boolean(values.is_pos),
         requiredOn: (values) => Boolean(values.is_pos),
         type: "autocomplete",
-        label: "POS Profile"
+        label: "POS Profile",
+        getOptions: async () => {
+            try {
+                const response = await api.get("api/search-link/", {
+                    params: {
+                        model: "POSProfile",
+                        app: "pos",
+                        fields: "name"
+                    }
+                });
+                return response.data?.map((row: any) => ({
+                    label: row.name,
+                    value: row.id
+                })) || [];
+            } catch (error) {
+                console.error("Error fetching POS profiles:", error);
+                return [];
+            }
+        }
     },
     {
         label: "Is Return",
@@ -107,67 +136,126 @@ const fields: Array<TypeField> = [
     {
         dependsOn: (values) => Boolean(values.is_return),
         requiredOn: (values) => Boolean(values.is_return),
-        defaultValue: true,
-
         name: "return_against",
         type: "autocomplete",
-        required: true,
-        label: "Return Against"
+        label: "Return Against",
+        getOptions: async () => {
+            try {
+                const response = await api.get("api/search-link/", {
+                    params: {
+                        model: "Invoice",
+                        app: "pos",
+                        fields: "name"
+                    }
+                });
+                return response.data?.map((row: any) => ({
+                    label: row.name,
+                    value: row.id
+                })) || [];
+            } catch (error) {
+                console.error("Error fetching invoices:", error);
+                return [];
+            }
+        }
     },
     {
-        label: "",
+        label: "Items",
         type: "section",
         sectionBreak: true,
         name: "items_section",
     },
     {
-        label: "Item",
+        label: "Items",
         type: "table",
         name: "items",
         required: true,
-        defaultValue: [{}],
         fields: [
             {
-                label: "Item",
-                placeholder: "Select Item",
+                label: "Product",
+                placeholder: "Select Product",
                 required: true,
-                name: "item",
+                name: "product",
                 getOptions: async () => {
-                    const response = await api.get("api/search-link/", {
-                        params: {
-                            "model": "Product",
-                            "app": "stock",
-                            "fields": "product_name"
-                        }
-                    });
-                    return response.data.map((row) => ({
-                        label: row.product_name,
-                        value: row.id
-                    }));
+                    try {
+                        const response = await api.get("api/search-link/", {
+                            params: {
+                                model: "Product",
+                                app: "stock",
+                                fields: "product_name"
+                            }
+                        });
+                        return response.data?.map((row: any) => ({
+                            label: row.product_name,
+                            value: row.id
+                        })) || [];
+                    } catch (error) {
+                        console.error("Error fetching products:", error);
+                        return [];
+                    }
                 },
                 type: "autocomplete",
+                onChange: (grid) => {
+                    console.log(grid);
+                }
             },
             {
                 label: "Quantity",
                 name: "quantity",
                 type: "decimal",
                 defaultValue: 1,
+                required: true,
+                onChange: ({ grid, name, index, dataform }) => {
+                    // console.warn(dataform )
+
+
+                    const row = grid.state.find(row => row.index === index);
+                    if (!row) {
+                        return;
+                    }
+                    const { quantity, price } = row.values;
+                    // console.log(row);
+                    // console.error(quantity, price);
+                    const amount = decimal(quantity * price);
+                    grid.setValue({ name: "amount", value: amount, id: row.id });
+                    console.log(grid.state)
+                    const totalQuantity = grid.state.reduce((sum, row) => {
+                        return sum + decimal(row.values.quantity);
+                    }, 0);
+                    const totalAmount = grid.state.reduce((total, row) => {
+                        return total + decimal(row.values.amount)
+                    }, 0);
+
+                    if (dataform) {
+
+                        dataform.setValue("total_quantity", totalQuantity);
+                        dataform.setValue("total_amount", totalAmount);
+                    }
+                    // console.error(amount)
+                    // console.log()
+                    // console.log(grid);
+                }
             },
             {
-                label: "Rate",
-                name: "rate",
+                label: "Price",
+                name: "price",
                 type: "decimal",
+                required: true,
+                // min: 0    
             },
             {
                 label: "Amount",
                 name: "amount",
                 type: "decimal",
                 readOnly: true,
+                // Calculate amount as quantity * rate
+                // calculate: (row: any) => {
+                //     const quantity = parseFloat(row.quantity) || 0;
+                //     const rate = parseFloat(row.rate) || 0;
+                //     return quantity * rate;
+                // }
             },
-
         ]
     },
-
     {
         name: "totals_section",
         type: "section",
@@ -177,56 +265,138 @@ const fields: Array<TypeField> = [
     {
         name: "total_quantity",
         type: "decimal",
-        label: "Total Quantity"
+        label: "Total Quantity",
+        readOnly: true,
+        // Calculate from items
+        // calculate: (values: any) => {
+        //     if (!values.items || !Array.isArray(values.items)) return 0;
+        //     return values.items.reduce((sum: number, item: any) => {
+        //         return sum + (parseFloat(item.quantity) || 0);
+        //     }, 0);
+        // }
     },
     {
         label: "",
         columnBreak: true,
         type: "column",
-        name: "column_break",
+        name: "column_break_3",
     },
     {
         name: "total_amount",
         type: "decimal",
-        label: "Total Amount"
+        label: "Total Amount",
+        readOnly: true,
+        // calculate: (values: any) => {
+        //     if (!values.items || !Array.isArray(values.items)) return 0;
+        //     return values.items.reduce((sum: number, item: any) => {
+        //         const quantity = parseFloat(item.quantity) || 0;
+        //         const rate = parseFloat(item.rate) || 0;
+        //         return sum + (quantity * rate);
+        //     }, 0);
+        // }
     },
     {
         name: "grand_total",
         type: "decimal",
-        label: "Grand Total"
+        label: "Grand Total",
+        readOnly: true,
+        // calculate: (values: any) => {
+        //     // For now, grand total equals total amount
+        //     // You can add tax calculations here later
+        //     if (!values.items || !Array.isArray(values.items)) return 0;
+        //     return values.items.reduce((sum: number, item: any) => {
+        //         const quantity = parseFloat(item.quantity) || 0;
+        //         const rate = parseFloat(item.rate) || 0;
+        //         return sum + (quantity * rate);
+        //     }, 0);
+        // }
     },
     {
         name: "outstanding_amount",
         type: "decimal",
-        label: "Outstanding Amount"
+        label: "Outstanding Amount",
+        readOnly: true,
+        // calculate: (values: any) => {
+        //     // Outstanding amount typically equals grand total for new invoices
+        //     // Subtract any payments made
+        //     return values.grand_total || 0;
+        // }
     }
-]
+];
 
-
-const useInvoiceQuery = (id: string | null) => {
+const useInvoiceQuery = (id: string | undefined) => {
     return useQuery({
-        queryKey: ['invoice-detail'],
+        queryKey: ['invoice-detail', id],
         queryFn: async () => {
-            const response = await api.get("api/pos/invoice?id=" + id,);
-            return response.data;
+            if (!id) return null;
+            try {
+                const response = await api.get(`api/pos/invoice`, {
+                    params: { id }
+                });
+                return response.data;
+            } catch (error) {
+                console.error("Error fetching invoice:", error);
+                throw error;
+            }
         },
         enabled: Boolean(id),
+        retry: 2,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+    });
+};
 
-    })
-}
+const InvoiceForm = () => {
+    const params = useParams<{ id?: string }>();
+    const { data, isLoading, error, isError } = useInvoiceQuery(params.id);
 
-const Index = () => {
-    const params = useParams();
-    const { data } = useInvoiceQuery(params.id);
+    // Show loading state
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Spinner />
+                <span className="ml-2">Loading invoice...</span>
+            </div>
+        );
+    }
 
+    // Show error state
+    if (isError) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                    <p className="text-red-600 mb-2">
+                        Error loading invoice: {error?.message || 'Unknown error'}
+                    </p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
-    console.log(params)
-    return (<div>
-        <DataFormProvider fields={fields} title="POS Invoice">
-            <DataForm />
-        </DataFormProvider>
-    </div>)
-}
+    // Determine if this is a new invoice or editing existing
+    const isNewInvoice = !params.id;
+    const formTitle = isNewInvoice ? "New POS Invoice" : "Edit POS Invoice";
 
+    // Prepare form values
+    const formValues = data || {};
 
-export default Index;
+    return (
+        <div className="container mx-auto p-4">
+            <DataFormProvider
+                fields={fields}
+                title={formTitle}
+                values={formValues}
+            // mode={isNewInvoice ? "create" : "edit"}
+            >
+                <DataForm />
+            </DataFormProvider>
+        </div>
+    );
+};
+
+export default InvoiceForm;

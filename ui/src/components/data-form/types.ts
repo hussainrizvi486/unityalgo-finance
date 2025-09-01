@@ -40,6 +40,7 @@ export interface TypeField {
     type: FieldType;
     required?: boolean;
     defaultValue?: FieldValue;
+    readOnly?: boolean;
     options?: TypeOption[];
     placeholder?: string;
     sectionBreak?: boolean;

@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
-import { TypeField } from "@components/data-form/types";
+import type { GridFormContextType, GridFormRowState, TypeField } from "./types";
 import { Input } from "../ui/input";
-import { TypeFieldValue, TIContextType, TFRowState } from "./types"
+import type { TypeFieldValue, TIContextType, TFRowState } from "./types"
 import { Checkbox } from "../ui/checkbox";
 import { AutoComplete } from "../ui/autocomplete";
 import type { OptionType } from "../ui/autocomplete";
@@ -22,23 +22,24 @@ export interface FieldProps {
     field: TypeField;
     onChange?: (value: TypeFieldValue) => void;
     onBlur?: (value: TypeFieldValue) => void;
-    gridUpdate?: boolean,
-    state: TFRowState;
-    ctx: TIContextType
+    gridUpdate?: boolean;
+    state: GridFormRowState;
+    ctx: GridFormContextType;
 }
 
 
 
 const Field: React.FC<FieldProps> = (props) => {
-    const { field, onBlur, state, ctx } = props;
+    const { field, onBlur, state, ctx, } = props;
 
     const [className, setClassName] = useState<string>("h-full w-full shadow-none border-none rounded-none");
     const fieldState = state.fields[field.name];
     const value = fieldState.value;
-
+    
 
     const handleChange = (newValue: TypeFieldValue) => {
         ctx.setValue({ name: field.name, value: newValue, id: state.id });
+        field.onChange?.({ "grid": ctx, "name": field.name, "index": state.index, dataform: ctx.dataform });
     };
 
 
@@ -58,7 +59,7 @@ const Field: React.FC<FieldProps> = (props) => {
                 id={state.id}
                 checked={Boolean(value)}
                 onCheckedChange={(checked) => handleChange?.(checked)}
-                onBlur={() => onBlur?.(value)}
+            // onBlur={() => onBlur?.(value)}
             />
         );
     }
@@ -119,9 +120,9 @@ const Field: React.FC<FieldProps> = (props) => {
         );
     }
 
-    if (field.type === "custom" && field.component) {
-        return field.component();
-    }
+    // if (field.type === "custom" && field.component) {
+    //     return field.component();
+    // }
 
     if (field.type == "date") {
         return (

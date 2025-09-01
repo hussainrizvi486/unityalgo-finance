@@ -7,8 +7,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { AutoComplete, type OptionType } from "../../ui/autocomplete";
 // import { Column, Section } from "./components/layout";
 import type { FieldValue, FormValues, FormState, TypeField } from "../types";
-import { TableInput } from "../../table-input/index";
-import { Button } from "../ui/button";
+// import { TableInput } from "../../table-input/index";
+// import { Button } from "../ui/button";
 import { DatePicker } from "../../ui/date-picker";
 import { GridForm } from "../../table-input/grid-form";
 
@@ -65,7 +65,7 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
         )
     }
     if (field.type == "table") {
-        return <div className="mb-4"><GridForm fields={field.fields} values={state.value as Record<string, FieldValue>[] || []} />;</div>
+        return <div className="mb-4"><GridForm fields={field.fields} values={state.value as Record<string, FieldValue>[] || []} dataform={form} />;</div>
     }
     return (
         <div className="mb-4 ">

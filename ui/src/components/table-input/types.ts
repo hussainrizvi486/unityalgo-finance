@@ -1,3 +1,4 @@
+import type { DFContextValue } from "../data-form";
 import type { FieldState, TypeOption } from "../data-form/types";
 
 export type FieldType =
@@ -47,7 +48,7 @@ export interface TypeField<T extends FieldType = FieldType> {
 
     required?: boolean;
     defaultValue?: FieldValue<T>;
-    
+
     options?: TypeOption[];
     placeholder?: string;
 
@@ -57,8 +58,8 @@ export interface TypeField<T extends FieldType = FieldType> {
     readOnly?: boolean
     hidden?: boolean
 
-    onChange?: (form: GridFormContextType, id: string) => void;
-    onBlur?: (form: GridFormContextType, id: string) => void;
+    onChange?: (params: { grid: GridFormContextType; name: string; index: number, dataform: DFContextValue }) => void;
+    onBlur?: (params: { grid: GridFormContextType; name: string; index: number }) => void;
 
     getOptions?: (query?: string) => Promise<TypeOption[]>;
 
@@ -99,8 +100,8 @@ export interface GridFormContextType {
     addRow: (values?: Record<string, FieldValue>) => void;
     removeRow: (id?: string | string[]) => void;
     selectRow: (params: { id?: string | string[], selectAll?: boolean }) => void;
-
-    onChange: () => void;
+    dataform: DFContextValue;
+    onChange?: () => void;
     expandedRow?: GridFormRowState | null;
     setExpandedRow: (id?: GridFormRowState | null) => void;
     // setError: (params: { id: string, name: string, message: string }) => void;

@@ -9,11 +9,11 @@ import App from './App.tsx';
 
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+  <>
     <QueryClientProvider client={queryClient}>
       <Provider store={store}>
         <App />
       </Provider>
     </QueryClientProvider>
-  </StrictMode>,
+  </>,
 )
