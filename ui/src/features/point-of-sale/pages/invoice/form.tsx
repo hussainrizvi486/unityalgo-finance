@@ -1,7 +1,7 @@
 import moment from "moment";
 import { data, useParams } from "react-router-dom";
-import { DataForm, DataFormProvider } from "@/components/data-form";
-import type { TypeField } from "@/components/table-input/types";
+import { DataForm } from "@/components/data-form/zustand-version";
+import type { TypeField } from "@/components/grid-form/types";
 import api from "@/api";
 import { useQuery } from "@tanstack/react-query";
 import { Spinner } from "@/components/loaders/spinner";
@@ -386,15 +386,15 @@ const InvoiceForm = () => {
     const formValues = data || {};
 
     return (
-        <div className="container mx-auto p-4">
-            <DataFormProvider
+        <div className="mx-auto p-4">
+            <DataForm fields={fields} title="POS Invoice Zustand" values={formValues} />
+            {/* <DataFormProvider
                 fields={fields}
                 title={formTitle}
                 values={formValues}
-            // mode={isNewInvoice ? "create" : "edit"}
             >
                 <DataForm />
-            </DataFormProvider>
+            </DataFormProvider> */}
         </div>
     );
 };

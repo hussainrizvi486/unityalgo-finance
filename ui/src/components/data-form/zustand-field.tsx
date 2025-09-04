@@ -1,14 +1,13 @@
 import React, { useCallback, useMemo } from "react";
-import type { TypeField, FieldValue, DFContextValue as DFContext } from "../types";
-import { cn } from "../../../utils";
-import { Input } from "../../ui/input";
-import { Checkbox } from "../../ui/checkbox";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
-import { AutoComplete, type OptionType } from "../../ui/autocomplete";
-import type { FieldValue, FormValues, FormState, TypeField } from "../types";
-import { DatePicker } from "../../ui/date-picker";
-import { GridForm } from "../../grid-form/grid-form";
-
+import type { TypeField, FieldValue, DFContextValue as DFContext } from "./types";
+import { cn } from "@/utils";
+import { Input } from "../ui/input";
+import { Checkbox } from "../ui/checkbox";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { AutoComplete, type OptionType } from "../ui/autocomplete";
+import type { FieldValue, FormValues, FormState, TypeField } from "./types";
+import { DatePicker } from "../ui/date-picker";
+import { GridForm } from "../grid-form/grid-form";
 
 interface FieldProps {
     field: TypeField;
@@ -18,7 +17,7 @@ interface FieldProps {
 
 const Field: React.FC<FieldProps> = React.memo((props) => {
     const { field, form } = props;
-    const state = form.state[field.name];
+    const state = {};
 
 
     const classNames = useMemo(() => {
@@ -36,7 +35,7 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
 
     const { dependsOn, requiredOn } = field;
 
-    if (dependsOn && !dependsOn(form.getValues())) {
+    if (dependsOn && !dependsOn(form?.getValues() || {})) {
         return <></>
     }
 

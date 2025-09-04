@@ -65,3 +65,4 @@ export type TypeDFSection = {
     columns?: TypeField[][];
 }
 export type TypeDFLayout = Array<TypeDFSection>;
+
