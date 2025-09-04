@@ -1,46 +1,52 @@
 import React, { useCallback, useMemo } from "react";
-import type { TypeField, FieldValue, DFContextValue as DFContext } from "./types";
 import { cn } from "@/utils";
-import { Input } from "../ui/input";
 import { Checkbox } from "../ui/checkbox";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Input } from "../ui/input";
 import { AutoComplete, type OptionType } from "../ui/autocomplete";
-import type { FieldValue, FormValues, FormState, TypeField } from "./types";
 import { DatePicker } from "../ui/date-picker";
-import { GridForm } from "../grid-form/grid-form";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import type { FieldValue, TypeField } from "./types";
+import { GridForm, type TypeGridFormStore } from "../grid-form/zustand-grid-form";
+import type { TypeDFStore } from "./zustand-version";
 
 interface FieldProps {
     field: TypeField;
-    form: DFContext;
+    store: TypeDFStore;
 }
 
 
 const Field: React.FC<FieldProps> = React.memo((props) => {
-    const { field, form } = props;
-    const state = {};
+    const { field, store } = props;
 
+    const state = store.state[field.name];
 
     const classNames = useMemo(() => {
         return state?.hasError ? "ring ring-offset-3 ring-destructive" : "";
     }, [state?.hasError]);
 
     const handleChange = useCallback((value: FieldValue) => {
-        form?.setValue?.(field.name, value);
-    }, [form, field.name]);
+        store.setValue?.({ name: field.name, value });
+    }, [store, field.name]);
 
     const handleBlur = useCallback(() => {
         field.onBlur?.(state?.value);
     }, [field, state?.value]);
 
 
+
+
+    const handleAddGrid = useCallback((grid: TypeGridFormStore) => {
+        store.addGrid(field.name, grid);
+    }, [store, field.name]);
+
     const { dependsOn, requiredOn } = field;
 
-    if (dependsOn && !dependsOn(form?.getValues() || {})) {
+    if (dependsOn && !dependsOn(store.getValues() || {})) {
         return <></>
     }
 
 
-    const required: boolean = Boolean(requiredOn ? requiredOn(form.getValues()) : field.required)
+    const required: boolean = Boolean(requiredOn ? requiredOn(store.getValues()) : field.required)
 
     if (field.type === "checkbox") {
         return (
@@ -62,7 +68,18 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
         )
     }
     if (field.type == "table") {
-        return <div className="mb-4"><GridForm fields={field.fields} values={state.value as Record<string, FieldValue>[] || []} dataform={form} />;</div>
+        return <div className="mb-4">
+            <GridForm
+                fields={field.fields}
+                values={state.value as Record<string, FieldValue>[] || []}
+                gridContentClass={classNames}
+                onChange={(values) => {
+                    handleChange(values);
+                }}
+                addGrid={handleAddGrid}
+                control={store}
+            />
+        </div>
     }
     return (
         <div className="mb-4 ">
@@ -103,7 +120,7 @@ const FieldInput: React.FC<DFInputFieldProps> = React.memo((props) => {
     const { field, className, onChange, onBlur, value } = props;
 
     if (field.type == "date") {
-        return <DatePicker onChange={onChange} name={field.name} value={value} />
+        return <DatePicker onChange={onChange} name={field.name} value={value as Date} />
     }
 
     if (field.type == "checkbox") {

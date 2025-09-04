@@ -1,4 +1,14 @@
-import type { TypeDFLayout, TypeDFSection, TypeField } from "./types";
+import type { TypeDFLayout, TypeDFSection, TypeField, FieldValue } from "./types";
+
+export const isEmpty = (value: FieldValue): boolean => {
+    if (value === null || value === undefined) return true;
+    if (typeof value === 'string') return value.trim() === '';
+    if (typeof value === 'number') return false;
+    if (typeof value === 'boolean') return false;
+    if (Array.isArray(value)) return value.length === 0;
+    return false;
+}
+
 
 const buildLayout = (fields: TypeField[]) => {
     const layout: TypeDFLayout = [];

@@ -1,6 +1,6 @@
 import * as React from "react"
 import { cn } from "../../utils/index";
-import { decimal } from "../../utils";
+import { decimal, integer } from "../../utils";
 
 type InputType = "decimal" | "percentage" | "int" | "currency" | "text" | "email" | "password";
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
@@ -15,30 +15,30 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
     disabled?: boolean;
 }
 
-const formatValue = (value: string, type: InputType): string => {
+const formatValue = (value: string, type: InputType): string | number => {
     if (!value || value === '') return '';
-
 
     const cleanValue = value.replace(/[$,%]/g, '');
 
     if (type === "decimal") {
-        return decimal(cleanValue);
+        const numValue = decimal(cleanValue);
+        return typeof numValue === 'number' ? numValue : cleanValue;
     }
     if (type == "email") {
         return cleanValue;
     }
 
     if (type === "percentage") {
-        const num = parseFloat(cleanValue);
-        return isNaN(num) ? '' : `${num.toFixed(2)}%`;
+        const numValue = decimal(cleanValue);
+        return typeof numValue === 'number' ? numValue : cleanValue;
     }
     if (type === "int") {
-        const num = parseInt(cleanValue, 10);
-        return isNaN(num) ? '' : num.toString();
+        const numValue = integer(cleanValue);
+        return typeof numValue === 'number' ? numValue : cleanValue;
     }
     if (type === "currency") {
-        const num = parseFloat(cleanValue);
-        return isNaN(num) ? '' : `$${num.toFixed(2)}`;
+        const numValue = decimal(cleanValue);
+        return typeof numValue === 'number' ? numValue : cleanValue;
     }
     if (type === "text") {
         return value;
@@ -52,6 +52,29 @@ const parseValue = (value: string, type: InputType): string => {
     return String(value).replace(/[$,%]/g, '');
 }
 
+const displayValue = (value: string | number, type: InputType, isFocused: boolean): string => {
+    if (!value && value !== 0) return '';
+
+    if (isFocused) {
+        return parseValue(String(value), type);
+    }
+
+    if (type === "currency") {
+        return typeof value === 'number' ? `$${value.toFixed(2)}` : String(value);
+    }
+    if (type === "percentage") {
+        return typeof value === 'number' ? `${value}%` : String(value);
+    }
+    if (type === "decimal") {
+        return typeof value === 'number' ? value.toFixed(2) : String(value);
+    }
+    if (type === "int") {
+        return typeof value === 'number' ? value.toString() : String(value);
+    }
+
+    return String(value);
+}
+
 function getPlaceholder(placeholder: string, type: InputType): string {
     return type === "currency" ? "$0.00" : type === "percentage" ? "0%" : type == "decimal" ? "0.00" : type == "int" ? "0" : placeholder;
 }
@@ -62,22 +85,23 @@ function isNumericType(type: InputType): boolean {
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
     ({ className, type = "text", onChange, onBlur, value, ...props }, ref) => {
-        const [displayValue, setDisplayValue] = React.useState(
+        const [internalValue, setInternalValue] = React.useState(
             value ? formatValue(parseValue(String(value), type), type) : ''
         );
 
         const [isFocused, setIsFocused] = React.useState(false);
+
         React.useEffect(() => {
             if (value !== undefined) {
-                setDisplayValue(isFocused ? parseValue(value, type) : formatValue(String(value), type));
+                const formatted = formatValue(parseValue(String(value), type), type);
+                setInternalValue(formatted);
             }
-        }, [value, type, isFocused]);
+        }, [value, type]);
 
         const handleFocus = (event: React.FocusEvent<HTMLInputElement>) => {
             setIsFocused(true);
-            if (type !== "text" && displayValue) {
-                const unformatted = parseValue(displayValue, type);
-                setDisplayValue(unformatted);
+            if (type !== "text" && internalValue) {
+                const unformatted = parseValue(String(internalValue), type);
                 setTimeout(() => {
                     event.target.setSelectionRange(unformatted.length, unformatted.length);
                 }, 0);
@@ -89,13 +113,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             setIsFocused(false);
             const { value: inputValue } = event.target;
             const formattedValue = formatValue(inputValue, type);
-            setDisplayValue(formattedValue);
+            setInternalValue(formattedValue);
 
             const syntheticEvent = {
                 ...event,
                 target: {
                     ...event.target,
-                    value: parseValue(inputValue, type)
+                    value: isNumericType(type) ? formattedValue : parseValue(inputValue, type)
                 }
             } as React.FocusEvent<HTMLInputElement>;
 
@@ -104,16 +128,16 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
         const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
             const { value: inputValue } = event.target;
-            setDisplayValue(inputValue);
+            const formattedValue = formatValue(inputValue, type);
+            setInternalValue(formattedValue);
 
             const syntheticEvent = {
                 ...event,
                 target: {
                     ...event.target,
-                    value: type === "text" ? inputValue : parseValue(inputValue, type)
+                    value: isNumericType(type) ? formattedValue : (type === "text" ? inputValue : parseValue(inputValue, type))
                 }
             } as React.ChangeEvent<HTMLInputElement>;
-
             onChange?.(syntheticEvent);
         };
 
@@ -121,18 +145,17 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             <input
                 type="text"
                 className={cn(
-                    "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground  border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50  focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+                    "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground  border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50  focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20",
                     isNumericType(type) && props.readOnly ? "text-right bg-accent" : "",
                     className
                 )}
                 ref={ref}
                 {...props}
-                value={displayValue}
+                value={displayValue(internalValue, type, isFocused)}
                 onChange={handleChange}
                 placeholder={getPlaceholder(props.placeholder, type)}
                 onFocus={handleFocus}
                 onBlur={handleBlur}
-
             />
         );
     }

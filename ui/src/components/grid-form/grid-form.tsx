@@ -1,99 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import type { TypeField, GridFormContextType, GridFormState, GridFormValues, GridFormRowState, FieldValue, FieldType } from "./types";
-import { decimal, integer, cn } from "@/utils";
-
-// import type {/ FieldValue } from "react-hook-form";
-import { Checkbox } from "../ui/checkbox";
 import { FileTextIcon, PencilIcon, SettingsIcon, Trash2Icon } from "lucide-react";
-import { Button } from "../ui/button";
-// import {  } from "../../utils";
-import { Field } from "./field";
-
-import { MiniForm } from "./mini-form";
+import { decimal, integer, cn } from "@/utils";
 import api from "@/api";
+import type { TypeField, GridFormContextType, GridFormState, GridFormValues, GridFormRowState, FieldValue, FieldType } from "./types";
 import type { DFContextValue } from "../data-form";
+import { Checkbox } from "../ui/checkbox";
+import { Button } from "../ui/button";
+import { Field } from "./field";
+import { MiniForm } from "./mini-form";
 
-export const Demo = () => {
-    const fields: Array<TypeField> = [
-        {
-            name: "item",
-            label: "Item",
-            getOptions: async () => {
-                const response = await api.get("api/search-link/", {
-                    params: {
-                        "model": "Product",
-                        "app": "stock",
-                        "fields": "product_name"
-                    }
-                });
-                return response.data.map((row) => ({
-                    label: row.product_name,
-                    value: row.id
-                }));
-            },
-            type: "autocomplete",
-            width: 4,
-            required: true,
-        },
-        {
-
-            name: "Tax Template",
-            label: "Tax Template",
-            type: "text"
-        },
-        { name: "quantity", label: "Quantity", type: "number", defaultValue: 1 },
-        {
-            name: "uom", label: "UOM", type: "select", options: [
-                { label: "PCs", value: "pcs" },
-                { label: "Nos", value: "nos" },
-            ],
-        },
-        // {
-        //     name: "income_account",
-        //     type: "text",
-        //     label: "Income Account",
-        // },
-        // {
-        //     name: "expense_account",
-        //     type: "text",
-        //     label: "Expense Account",
-        //     required: true,
-        // },
-        { name: "rate", label: "Rate", type: "decimal" },
-        { name: "amount", label: "Amount", type: "decimal", readOnly: true }
-    ]
-
-    // const values: GridFormValues[] = {[
-    //     {
-    //         "item": {
-    //             "label": "Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrical - 54g Lightweight - 8K Polling - 35K DPI Optical Sensor - Gen3 Optical Switches - 8 Programmable Buttons - 95 Hr Battery - Black",
-    //             "value": "c3274622-227b-4dae-84be-2ce9387a2316",
-    //         }, "quantity": 2, "rate": 100, "amount": 200
-    //     },
-    //     { "item": "c3274622-227b-4dae-84be-2ce9387a2316", "quantity": 1, "rate": 150, "amount": 150 },
-    //     { "item": "c3274622-227b-4dae-84be-2ce9387a2316", "quantity": 3, "rate": 50, "amount": 150 }
-    // ]
-    // }
-
-    return (
-        <div className="max-w-6xl mx-auto px-2 py-16">
-            <div className="mb-8">
-
-            </div>
-
-            <GridForm fields={fields} />
-        </div>
-    )
-}
-const getColumnsWidth = (fields: TypeField[]) => {
+const getHeaderColumns = (fields: TypeField[]) => {
     const availableWidth = 9;
     const columns: TypeField[] = [];
     let utilizedWidth = 0;
 
     fields.forEach((field) => {
         const width = field.width || 1;
-        if (utilizedWidth + width <= availableWidth) {
+
+        if (utilizedWidth + width <= availableWidth
+            && !field.columnBreak
+            && !field.sectionBreak
+            && !field.hidden
+            && !["column", "section"].includes(field.type)) {
             utilizedWidth += width;
             columns.push(field);
         }
@@ -148,8 +77,6 @@ const formatValue = (value: FieldValue, type: FieldType) => {
 }
 
 
-
-
 const getFields = (fields: TypeField[]) => {
     return fields.filter(field => !field.columnBreak && !field.sectionBreak);
 }
@@ -180,51 +107,39 @@ const getInitialState = (fields: TypeField[], values?: GridFormValues[]) => {
     })
 
     return state
-
 }
 
 
-const isEmpty = (value: FieldValue, type: FieldType): boolean => {
-    if (["text", "textarea", "texteditor"].includes(type) && value.trim() === '') return true;
-
-    if (["number", "float", "currency", "decimal"].includes(type) && (value == null || value == undefined)) {
-        return true;
-    }
-
-    if (["boolean", "checkbox"].includes(type)) {
-        return false;
-    }
-
-    if (type == "date" && !value) {
-        return true;
-    }
-
-    return false;
+interface GridFormProviderProps {
+    children: React.ReactNode;
+    fields: TypeField[];
+    values?: GridFormValues[];
+    dataform: DFContextValue;
+    onChange?: (values: GridFormValues[]) => void;
 }
-
-const GridFormProvider: React.FC<{ children: React.ReactNode, fields: TypeField[], values?: GridFormValues[], dataform: DFContextType }> = (props) => {
+const GridFormProvider: React.FC<GridFormProviderProps> = (props) => {
     const controlFields = useMemo(() => getFields(props.fields), [props.fields]);
     const [state, setState] = useState<GridFormState>([]);
     const [expandedRow, setExpandedRow] = useState<GridFormRowState | null>(null);
 
-    const validateField = ({ name, id }: { name: string; id: string }) => {
-        let message = "";
-        let hasError = false;
+    // const validateField = ({ name, id }: { name: string; id: string }) => {
+    //     let message = "";
+    //     let hasError = false;
 
-        const field = controlFields.find(f => f.name === name);
-        const row = state.find(r => r.id === id);
+    //     const field = controlFields.find(f => f.name === name);
+    //     const row = state.find(r => r.id === id)
 
-        if (!field || !row) {
-            return { message, hasError };
-        }
-        const required = field.requiredOn ? field.requiredOn(row.values || {}) : field.required;
-        if (required && isEmpty(row.values?.[name], field.type)) {
-            message = "This field is required";
-            hasError = true;
-        }
+    //     if (!field || !row) {
+    //         return { message, hasError };
+    //     }
+    //     const required = field.requiredOn ? field.requiredOn(row.values || {}) : field.required;
+    //     if (required && isEmpty(row.values?.[name], field.type)) {
+    //         message = "This field is required";
+    //         hasError = true;
+    //     }
 
-        return { message, hasError };
-    }
+    //     return { message, hasError };
+    // }
 
 
     // const validate = () => {
@@ -262,7 +177,6 @@ const GridFormProvider: React.FC<{ children: React.ReactNode, fields: TypeField[
     //             errors: updatedErrors
     //         };
     //     })
-
     //     setState([...update]);
     // }
 
@@ -288,6 +202,9 @@ const GridFormProvider: React.FC<{ children: React.ReactNode, fields: TypeField[
         setState((prev) => [...prev, row]);
     }
 
+    const validate = () => {
+
+     }
 
     const removeRow = useCallback((id?: string | Array<string>) => {
         setState((prev) => {
@@ -362,7 +279,7 @@ const GridFormProvider: React.FC<{ children: React.ReactNode, fields: TypeField[
     }
 
     const allRowsSelected = useMemo(() => state.length > 0 && state.every(row => row.checked), [state]);
-    console.warn(state);
+    // console.warn(state);
     const contextValues = {
         setError,
         addRow,
@@ -383,8 +300,17 @@ const GridFormProvider: React.FC<{ children: React.ReactNode, fields: TypeField[
     const defaultValues: GridFormValues[] = useMemo(() => props.values, [props.values]);
 
     useEffect(() => {
-        setState(getInitialState(controlFields, defaultValues));
+        if (!state || !state.length) {
+            setState(getInitialState(controlFields, defaultValues));
+        }
     }, [controlFields, defaultValues])
+
+
+    useEffect(() => {
+        if (state.length) {
+            props.onChange?.(getValues());
+        }
+    }, [state])
 
     return <GridFormContext.Provider value={contextValues}>
         {props.children}
@@ -392,7 +318,7 @@ const GridFormProvider: React.FC<{ children: React.ReactNode, fields: TypeField[
 };
 const GridFormHeader = () => {
     const { fields, selectRow, allRowsSelected } = useGridForm();
-    const { styles, columns } = getColumnsWidth(fields);
+    const { styles, columns } = getHeaderColumns(fields);
 
     return (
         <header className="border-b bg-gray-200">
@@ -411,7 +337,7 @@ const GridFormHeader = () => {
                     <span className="text-sm font-medium">No.</span>
                 </div>
 
-                {columns.map((field, index) => (
+                {columns.map((field) => (
                     <div
                         key={field.name}
                         className={cn(
@@ -421,7 +347,6 @@ const GridFormHeader = () => {
                         <div className="flex items-center min-w-0">
                             <span className="text-sm font-medium truncate" > {field.label}</span>
                             {field.required && <span className="text-red-500 ml-1 shrink-0">*</span>}
-
                         </div>
 
                     </div>
@@ -438,7 +363,9 @@ type GridFormProps = {
     fields: TypeField[];
     gridContentClass?: string;
     values?: GridFormValues[];
-    dataform: DFContextValue;
+    dataform?: DFContextValue;
+    onChange?: (values: GridFormValues[]) => void;
+    className?: string;
 }
 
 const useGridForm = () => {
@@ -450,7 +377,7 @@ const useGridForm = () => {
 const GridForm: React.FC<GridFormProps> = (props) => {
     const hasError = false;
     return (
-        <GridFormProvider fields={props.fields} values={props.values} dataform={props.dataform}>
+        <GridFormProvider fields={props.fields} values={props.values} dataform={props.dataform} onChange={props.onChange}>
             <div className="">
                 <div className={cn("border rounded-md mb-4", props.gridContentClass, hasError ? "ring-destructive ring-2" : "")}>
                     <GridFormHeader />
@@ -464,7 +391,7 @@ const GridForm: React.FC<GridFormProps> = (props) => {
 const GridFormBody = () => {
     const form = useGridForm();
     const { fields, state, selectRow, expandedRow, setExpandedRow } = form;
-    const { columns, styles } = getColumnsWidth(fields);
+    const { columns, styles } = getHeaderColumns(fields);
 
     if (!state?.length) {
         return (
@@ -539,6 +466,7 @@ const GridFormBody = () => {
         </main>
     );
 };
+
 const GridFormFooter = () => {
     const { allRowsSelected, addRow, removeRow, state } = useGridForm();
     return (
@@ -557,3 +485,77 @@ const GridFormFooter = () => {
     )
 }
 export { GridForm };
+
+
+export const Demo = () => {
+    const fields: Array<TypeField> = [
+        {
+            name: "item",
+            label: "Item",
+            getOptions: async () => {
+                const response = await api.get("api/search-link/", {
+                    params: {
+                        "model": "Product",
+                        "app": "stock",
+                        "fields": "product_name"
+                    }
+                });
+                return response.data.map((row) => ({
+                    label: row.product_name,
+                    value: row.id
+                }));
+            },
+            type: "autocomplete",
+            width: 4,
+            required: true,
+        },
+        {
+
+            name: "Tax Template",
+            label: "Tax Template",
+            type: "text"
+        },
+        { name: "quantity", label: "Quantity", type: "number", defaultValue: 1 },
+        {
+            name: "uom", label: "UOM", type: "select", options: [
+                { label: "PCs", value: "pcs" },
+                { label: "Nos", value: "nos" },
+            ],
+        },
+        // {
+        //     name: "income_account",
+        //     type: "text",
+        //     label: "Income Account",
+        // },
+        // {
+        //     name: "expense_account",
+        //     type: "text",
+        //     label: "Expense Account",
+        //     required: true,
+        // },
+        { name: "rate", label: "Rate", type: "decimal" },
+        { name: "amount", label: "Amount", type: "decimal", readOnly: true }
+    ]
+
+    // const values: GridFormValues[] = {[
+    //     {
+    //         "item": {
+    //             "label": "Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrical - 54g Lightweight - 8K Polling - 35K DPI Optical Sensor - Gen3 Optical Switches - 8 Programmable Buttons - 95 Hr Battery - Black",
+    //             "value": "c3274622-227b-4dae-84be-2ce9387a2316",
+    //         }, "quantity": 2, "rate": 100, "amount": 200
+    //     },
+    //     { "item": "c3274622-227b-4dae-84be-2ce9387a2316", "quantity": 1, "rate": 150, "amount": 150 },
+    //     { "item": "c3274622-227b-4dae-84be-2ce9387a2316", "quantity": 3, "rate": 50, "amount": 150 }
+    // ]
+    // }
+
+    return (
+        <div className="max-w-6xl mx-auto px-2 py-16">
+            <div className="mb-8">
+
+            </div>
+
+            <GridForm fields={fields} />
+        </div>
+    )
+}
