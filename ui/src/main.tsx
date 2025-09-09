@@ -5,14 +5,14 @@ import { Provider } from 'react-redux'
 import { store } from "./store"
 import { queryClient } from './api/index.ts';
 import './index.css';
-import App from './App.tsx';
+import Application from './app.tsx';
 
 
 createRoot(document.getElementById('root')!).render(
   <>
     <QueryClientProvider client={queryClient}>
       <Provider store={store}>
-        <App />
+        <Application />
       </Provider>
     </QueryClientProvider>
   </>,

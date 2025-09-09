@@ -1,16 +1,17 @@
-import { useEffect, createContext, useContext, } from "react";
-
-
+import { useEffect, createContext, useContext, useMemo, } from "react";
 import { create } from "zustand";
 import { subscribeWithSelector } from 'zustand/middleware';
+
 import { FileTextIcon, PencilIcon, SettingsIcon, Trash2Icon } from "lucide-react";
+import api from "@/api";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { integer, decimal, cn } from "@/utils"
+
+
 import type { FieldType, FieldValue, GridFormRowState, GridFormValues, TypeField } from "./types";
 import { Field } from "./field";
 import { MiniForm } from "./mini-form";
-import api from "@/api";
 import type { TypeDFStore } from "../data-form/zustand-version";
 
 export interface TypeGridFormStore {
@@ -105,11 +106,10 @@ const gridFormStore = create<TypeGridFormStore>()(
         // Actions
         init: (fields, values = [], control = null) => {
             const controlFields = getFields(fields);
-            console.warn(values)
-
             const initialRows = values.map((row, index) =>
                 createInitialRowState(controlFields, row, index + 1)
             );
+            console.log("init called")
 
             set({
                 control,
@@ -382,7 +382,6 @@ interface GridFormProviderProps {
     addGrid?: (store: TypeGridFormStore) => void;
 }
 
-
 type TypeGridFormContext = { store?: TypeGridFormStore | null, }
 const GridFormContext = createContext<TypeGridFormContext>(null);
 
@@ -390,18 +389,20 @@ const GridFormContext = createContext<TypeGridFormContext>(null);
 
 const GridFormProvider: React.FC<GridFormProviderProps> = (props) => {
     const store = gridFormStore();
+
     useEffect(() => {
+
+        store.init(props.fields, props.values, props.control);
+        props.addGrid?.(store);
+
+        // Set up subscription AFTER initialization
 
         const unsubscribe = gridFormStore.subscribe(
             (updated, prev) => {
                 const { rows, fields } = updated;
-
                 if (rows?.length && fields?.length) {
 
-                    const values = store.getValues();
-                    // Grid onChange
-                    props.onChange?.(values);
-
+                    // Field level onChange - use the current store instance
                     rows.forEach((row) => {
                         Object.keys(row.fields).forEach((fieldName) => {
                             const prevValue = prev.rows.find(r => r.id === row.id)?.fields[fieldName]?.value;
@@ -409,35 +410,27 @@ const GridFormProvider: React.FC<GridFormProviderProps> = (props) => {
 
                             if (prevValue !== newValue) {
                                 const field = fields.find(f => f.name === fieldName);
-                                field?.onChange?.({ "grid": store, "name": field.name, "index": row.index, dataform: store.control });
+                                // Pass the current store instance
+                                field?.onChange?.({
+                                    "grid": store,
+                                    "name": field.name,
+                                    "index": row.index,
+                                    "dataform": store.control
+                                });
                             }
                         });
                     });
-
-
                 }
-
-
-            },
-            // (rows) => {
-            //     if (rows.length > 0) {
-            //         const values = store.getValues();
-            //         props.onChange?.(values);
-            //     }
-            // }
+            }
         );
         return unsubscribe;
-
-    }, [props.onChange]);
-
+    }, [props.fields, props.onChange]);
 
 
-    useEffect(() => {
-        store.init(props.fields, props.values, props.control);
-        props.addGrid?.(store)
 
-    }, [props.fields]);
 
+
+    if (!store.fields) return null;
 
     return (
         <GridFormContext.Provider value={{ store }}>
@@ -447,7 +440,6 @@ const GridFormProvider: React.FC<GridFormProviderProps> = (props) => {
 };
 
 
-// Header Component
 const GridFormHeader = () => {
     const { fields, allRowsSelected, selectRow } = useGridForm();
     const { styles, columns } = getHeaderColumns(fields);
@@ -596,7 +588,6 @@ const GridFormFooter = () => {
 
 
 
-// Main GridForm Component
 type GridFormProps = {
     fields: TypeField[];
     gridContentClass?: string;
@@ -608,8 +599,7 @@ type GridFormProps = {
 };
 
 const GridForm: React.FC<GridFormProps> = (props) => {
-    const hasError = false; // You can implement error checking logic here
-
+    // const hasError = false;
     return (
         <GridFormProvider
             fields={props.fields}
@@ -623,7 +613,7 @@ const GridForm: React.FC<GridFormProps> = (props) => {
                     cn(
                         "border rounded-md mb-4",
                         props.gridContentClass,
-                        hasError ? "ring-destructive ring-2" : ""
+                        // hasError ? "ring-destructive ring-2" : ""
                     )
                 }>
                     <GridFormHeader />
@@ -641,14 +631,28 @@ export { GridForm };
 
 
 export const Demo = () => {
-    function calculateTotal() {
+    function calculateTotal(args: {
+        grid: TypeGridFormStore;
+        name: string;
+        index: number;
+        dataform?: TypeDFStore;
+    }) {
+
+        console.log(args.grid)
+        args.grid.rows.forEach((row) => {
+            const amount = decimal(row.values.quantity) * decimal(row.values.rate);
+            console.log(amount)
+            // grid.setValue({ id: row.id, name: "amount", value: amount });
+        })
 
     }
+
     const fields: Array<TypeField> = [
         {
             name: "item",
             label: "Item",
             getOptions: async () => {
+                return
                 const response = await api.get("api/search-link/", {
                     params: {
                         "model": "Product",
@@ -669,9 +673,8 @@ export const Demo = () => {
             name: "quantity",
             label: "Quantity",
             type: "number",
-            onChange: ({ grid }) => {
-
-                console.log(grid.rows);
+            onChange: (args) => {
+                calculateTotal(args);
             },
             defaultValue: 1
         },
@@ -686,7 +689,14 @@ export const Demo = () => {
             ],
         },
 
-        { name: "rate", label: "Rate", type: "decimal" },
+        {
+            name: "rate",
+            label: "Rate",
+            type: "decimal",
+            onChange: (args) => {
+                calculateTotal(args);
+            },
+        },
         { name: "amount", label: "Amount", type: "decimal", readOnly: true }
     ]
 
@@ -695,7 +705,7 @@ export const Demo = () => {
             "item": {
                 "label": "Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrical - 54g Lightweight - 8K Polling - 35K DPI Optical Sensor - Gen3 Optical Switches - 8 Programmable Buttons - 95 Hr Battery - Black",
                 "value": "c3274622-227b-4dae-84be-2ce9387a2316",
-            }, "quantity": 1, "rate": 100, "amount": 200
+            }, "quantity": 1, "rate": 100,
         },
     ]
 
