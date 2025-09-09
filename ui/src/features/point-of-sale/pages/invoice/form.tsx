@@ -7,20 +7,23 @@ import { useQuery } from "@tanstack/react-query";
 import { Spinner } from "@/components/loaders/spinner";
 import { decimal } from "@/utils";
 import type { TypeGridFormStore } from "@/components/grid-form/zustand-grid-form";
+import { ConciergeBellIcon } from "lucide-react";
 
 
 function calculateItemTotals(grid: TypeGridFormStore, index: number, dataform: TypeDFStore) {
-    console.log(grid, index, dataform);
+    // console.log(grid, index, dataform);
+    console.log("Calculating totals for row index:", index);
+    console.log(grid);
+    // const row = grid.rows.find(row => row.index === index);
 
-    const row = grid.rows.find(row => row.index === index);
 
-    if (!row) { return; }
+    // if (!row) { return; }
 
-    const { quantity, price } = row.values;
-    console.log(row.values);
-    const amount = decimal(quantity) * decimal(price);
+    // const { quantity, price } = row.values;
+    // console.log(row.values);
+    // const amount = decimal(quantity) * decimal(price);
 
-    grid.setValue({ name: "amount", value: amount, id: row.id });
+    // grid.setValue({ name: "amount", value: amount, id: row.id });
 
     // const totals = grid.rows.reduce((acc, row) => {
     //     acc.quantity += decimal(row.values.quantity)
@@ -222,9 +225,7 @@ const fields: Array<TypeField> = [
                     }
                 },
                 type: "autocomplete",
-                onChange: (grid) => {
-                    console.log(grid);
-                }
+                // onChange: (grid) => {}
             },
             {
                 label: "Quantity",

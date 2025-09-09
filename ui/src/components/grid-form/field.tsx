@@ -98,7 +98,7 @@ const Field: React.FC<FieldProps> = (props) => {
                 options={field.options}
                 value={value as OptionType}
                 getOptions={field.getOptions}
-                // renderOption={field.renderOption}
+            // renderOption={field.renderOption}
             />
         );
     }

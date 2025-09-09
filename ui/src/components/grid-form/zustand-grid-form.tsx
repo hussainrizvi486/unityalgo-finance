@@ -19,7 +19,6 @@ export interface TypeGridFormStore {
     fields: TypeField[];
     rows: GridFormRowState[];
     expandedRow: GridFormRowState | null;
-    //   dataform: DFContextValue | null;
 
     // Computed values
     allRowsSelected: boolean;
@@ -60,42 +59,48 @@ const formatValue = (value: FieldValue, type: FieldType) => {
 const getFields = (fields: TypeField[]) => {
     return fields.filter(field => !field.columnBreak && !field.sectionBreak);
 };
-
-
-const createInitialRowState = (fields: TypeField[], values: GridFormValues = {}, index: number): GridFormRowState => {
+const createInitialRowState = (
+    fields: TypeField[],
+    values: GridFormValues = {},
+    index: number
+): GridFormRowState => {
     const row: GridFormRowState = {
         id: crypto.randomUUID(),
         index,
         checked: false,
         errors: {},
-        values: values || {},
+        values: {},
         fields: {},
     };
 
     fields.forEach((field) => {
-        const value = values[field.name] || field.defaultValue || null;
+        const value = values[field.name] ?? field.defaultValue ?? null;
+        const formattedValue = formatValue(value, field.type);
+
         row.fields[field.name] = {
             error: "",
             hasError: false,
-            field: field,
-            value: formatValue(value, field.type),
+            field,
+            value: formattedValue,
         };
+
+        // ✅ keep row.values in sync
+        row.values[field.name] = formattedValue;
     });
 
     return row;
 };
 
 
-const useTypeGridFormStore = create<TypeGridFormStore>()(
+const gridFormStore = create<TypeGridFormStore>()(
     subscribeWithSelector((set, get) => ({
         // Initial state
         fields: [],
         rows: [],
-        control: null,
         expandedRow: null,
-        dataform: null,
         allRowsSelected: false,
         selectedRowsCount: 0,
+        control: null,
 
         // Actions
         init: (fields, values = [], control = null) => {
@@ -110,7 +115,6 @@ const useTypeGridFormStore = create<TypeGridFormStore>()(
                 control,
                 fields,
                 rows: initialRows,
-                // dataform,
                 allRowsSelected: false,
                 selectedRowsCount: 0,
                 expandedRow: null,
@@ -189,28 +193,33 @@ const useTypeGridFormStore = create<TypeGridFormStore>()(
                 if (id && row.id !== id) return row;
 
                 const field = row.fields[name];
-                if (field) {
-                    return {
-                        ...row,
-                        fields: {
-                            ...row.fields,
-                            [name]: {
-                                ...field,
-                                value,
-                                hasError: false,
-                                error: "",
-                            }
-                        },
-                        values: {
-                            ...row.values,
-                            [name]: value
-                        }
-                    };
+
+                if (!field) {
+                    return row
+
+
                 }
-                return row;
+
+                return {
+                    ...row,
+                    fields: {
+                        ...row.fields,
+                        [name]: {
+                            ...field,
+                            value,
+                            hasError: false,
+                            error: "",
+                        }
+                    },
+                    values: {
+                        ...row.values,
+                        [name]: value
+                    }
+                };
             });
 
-            set({ rows: updatedRows });
+
+            set({ rows: [...updatedRows] });
         },
 
         setError: ({ id, name, message }) => {
@@ -259,7 +268,7 @@ const useTypeGridFormStore = create<TypeGridFormStore>()(
         },
 
         validateField: ({ name, id }) => {
-            const { fields, rows } = get();
+            const { fields, rows, getValues } = get();
             let message = "";
             let hasError = false;
 
@@ -269,8 +278,8 @@ const useTypeGridFormStore = create<TypeGridFormStore>()(
             if (!field || !row) {
                 return { message, hasError };
             }
-
-            const required = field.requiredOn ? field.requiredOn(row.values || {}) : field.required;
+            const values = getValues()[row.index - 1] || {};;
+            const required = field.requiredOn ? field.requiredOn(values) : field.required;
             const isEmpty = (value: FieldValue) => {
                 if (value === null || value === undefined) return true;
                 if (typeof value === 'string') return value.trim() === '';
@@ -278,7 +287,7 @@ const useTypeGridFormStore = create<TypeGridFormStore>()(
                 return false;
             };
 
-            if (required && isEmpty(row.values?.[name])) {
+            if (required && isEmpty(values?.[name])) {
                 message = "This field is required";
                 hasError = true;
             }
@@ -370,7 +379,6 @@ interface GridFormProviderProps {
     fields: TypeField[];
     values?: GridFormValues[];
     onChange?: (values: GridFormValues[]) => void;
-
     addGrid?: (store: TypeGridFormStore) => void;
 }
 
@@ -381,20 +389,45 @@ const GridFormContext = createContext<TypeGridFormContext>(null);
 
 
 const GridFormProvider: React.FC<GridFormProviderProps> = (props) => {
-    const store = useTypeGridFormStore();
-
-
+    const store = gridFormStore();
     useEffect(() => {
-        const unsubscribe = useTypeGridFormStore.subscribe(
-            (state) => state.rows,
-            (rows) => {
-                if (rows.length > 0) {
+
+        const unsubscribe = gridFormStore.subscribe(
+            (updated, prev) => {
+                const { rows, fields } = updated;
+
+                if (rows?.length && fields?.length) {
+
                     const values = store.getValues();
+                    // Grid onChange
                     props.onChange?.(values);
+
+                    rows.forEach((row) => {
+                        Object.keys(row.fields).forEach((fieldName) => {
+                            const prevValue = prev.rows.find(r => r.id === row.id)?.fields[fieldName]?.value;
+                            const newValue = row.fields[fieldName]?.value;
+
+                            if (prevValue !== newValue) {
+                                const field = fields.find(f => f.name === fieldName);
+                                field?.onChange?.({ "grid": store, "name": field.name, "index": row.index, dataform: store.control });
+                            }
+                        });
+                    });
+
+
                 }
-            }
+
+
+            },
+            // (rows) => {
+            //     if (rows.length > 0) {
+            //         const values = store.getValues();
+            //         props.onChange?.(values);
+            //     }
+            // }
         );
         return unsubscribe;
+
     }, [props.onChange]);
 
 
@@ -404,6 +437,7 @@ const GridFormProvider: React.FC<GridFormProviderProps> = (props) => {
         props.addGrid?.(store)
 
     }, [props.fields]);
+
 
     return (
         <GridFormContext.Provider value={{ store }}>
@@ -570,7 +604,7 @@ type GridFormProps = {
     onChange?: (values: GridFormValues[]) => void;
     control?: TypeDFStore;
     className?: string;
-    addGrid: (store: TypeGridFormStore) => void;
+    addGrid?: (store: TypeGridFormStore) => void;
 };
 
 const GridForm: React.FC<GridFormProps> = (props) => {
@@ -607,6 +641,9 @@ export { GridForm };
 
 
 export const Demo = () => {
+    function calculateTotal() {
+
+    }
     const fields: Array<TypeField> = [
         {
             name: "item",
@@ -629,29 +666,26 @@ export const Demo = () => {
             required: true,
         },
         {
+            name: "quantity",
+            label: "Quantity",
+            type: "number",
+            onChange: ({ grid }) => {
 
-            name: "Tax Template",
-            label: "Tax Template",
-            type: "text"
+                console.log(grid.rows);
+            },
+            defaultValue: 1
         },
-        { name: "quantity", label: "Quantity", type: "number", defaultValue: 1 },
         {
-            name: "uom", label: "UOM", type: "select", options: [
+            name: "uom",
+            label: "UOM",
+            type: "select",
+            defaultValue: "pcs",
+            options: [
                 { label: "PCs", value: "pcs" },
                 { label: "Nos", value: "nos" },
             ],
         },
-        // {
-        //     name: "income_account",
-        //     type: "text",
-        //     label: "Income Account",
-        // },
-        // {
-        //     name: "expense_account",
-        //     type: "text",
-        //     label: "Expense Account",
-        //     required: true,
-        // },
+
         { name: "rate", label: "Rate", type: "decimal" },
         { name: "amount", label: "Amount", type: "decimal", readOnly: true }
     ]
@@ -661,19 +695,13 @@ export const Demo = () => {
             "item": {
                 "label": "Viper V3 Pro Wireless Esports Gaming Mouse: Symmetrical - 54g Lightweight - 8K Polling - 35K DPI Optical Sensor - Gen3 Optical Switches - 8 Programmable Buttons - 95 Hr Battery - Black",
                 "value": "c3274622-227b-4dae-84be-2ce9387a2316",
-            }, "quantity": 2, "rate": 100, "amount": 200
+            }, "quantity": 1, "rate": 100, "amount": 200
         },
-        { "item": "c3274622-227b-4dae-84be-2ce9387a2316", "quantity": 1, "rate": 150, "amount": 150 },
-        { "item": "c3274622-227b-4dae-84be-2ce9387a2316", "quantity": 3, "rate": 50, "amount": 150 }
     ]
 
 
     return (
         <div className="max-w-6xl mx-auto px-2 py-16">
-            <div className="mb-8">
-
-            </div>
-
             <GridForm fields={fields} values={values} />
         </div>
     )
