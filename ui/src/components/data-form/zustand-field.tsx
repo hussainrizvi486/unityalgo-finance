@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { AutoComplete, type OptionType } from "@/components/ui/autocomplete";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/utils";
-import { Checkbox } from "../ui/checkbox";
-import { Input } from "../ui/input";
-import { AutoComplete, type OptionType } from "../ui/autocomplete";
-import { DatePicker } from "../ui/date-picker";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import type { FieldValue, TypeField } from "./types";
-import { GridForm, type TypeGridFormStore } from "../grid-form/zustand-grid-form";
+import { GridForm, } from "./components/grid-form/index";
 import type { TypeDFStore } from "./zustand-version";
 
 interface FieldProps {
@@ -34,10 +34,6 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
 
 
 
-
-    const handleAddGrid = useCallback((grid: TypeGridFormStore) => {
-        store.addGrid(field.name, grid);
-    }, [store, field.name]);
 
     const { dependsOn, requiredOn } = field;
 
@@ -70,14 +66,15 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
     if (field.type == "table") {
         return <div className="mb-4">
             <GridForm
-                fields={field.fields}
-                values={state.value as Record<string, FieldValue>[] || []}
-                gridContentClass={classNames}
-                onChange={(values) => {
-                    handleChange(values);
-                }}
-                addGrid={handleAddGrid}
                 control={store}
+                grid={store.grids[field.name]}
+            // fields={field.fields}
+            // values={state.value as Record<string, FieldValue>[] || []}
+            // gridContentClass={classNames}
+            // onChange={(values) => {
+            //     handleChange(values);
+            // }}
+            // control={store}
             />
         </div>
     }

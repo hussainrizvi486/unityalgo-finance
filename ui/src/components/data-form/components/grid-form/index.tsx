@@ -1,12 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { useState } from "react";
 import type { FieldType, TypeField, TypeOption } from "@/components/data-form/types";
-import { FileTextIcon, PencilIcon, Proportions, SettingsIcon, Trash2Icon } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
-import { integer, decimal, cn } from "@/utils"
-import api from "@/api";
 import type { FieldValue } from "react-hook-form";
 import type { TypeDFStore, TypeGridFormStore } from "../../zustand-version";
+
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { AutoComplete, type OptionType } from "@/components/ui/autocomplete";
+import { DatePicker } from "@/components/ui/date-picker";
+import {
+    Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { FileTextIcon, PencilIcon, SettingsIcon, Trash2Icon } from "lucide-react";
+import { cn } from "@/utils";
+
 
 interface TypeGridField<T extends FieldType = FieldType> {
     name: string;
@@ -67,8 +76,14 @@ const getHeaderColumns = (fields: TypeGridField[]) => {
 };
 
 
-const GridFormHeader = ({ control, grid }) => {
-    const { fields, allRowsSelected, selectRow } = control;
+interface GridCompProps {
+    control: TypeDFStore;
+    grid: TypeGridFormStore;
+}
+
+const GridFormHeader: React.FC<GridCompProps> = ({ control, grid }) => {
+    const { selectRow } = control;
+    const { fields, allRowsSelected } = grid;
     const { styles, columns } = getHeaderColumns(fields);
 
     return (
@@ -76,7 +91,7 @@ const GridFormHeader = ({ control, grid }) => {
             <div className="grid items-center h-10" style={styles} >
                 <div className="px-3 py-3 flex items-center justify-center border-r border-gray-300 h-full" >
                     <Checkbox
-                        onCheckedChange={() => selectRow({ selectAll: true })}
+                        onCheckedChange={() => selectRow({ fieldname: grid.gridName, selectAll: true })}
                         checked={allRowsSelected}
                     />
                 </div>
@@ -112,9 +127,9 @@ const GridFormHeader = ({ control, grid }) => {
 };
 
 
-const GridFormBody = ({ control }) => {
-    
-    const { fields, rows, selectRow, expandedRow, setExpandedRow } = control;
+const GridFormBody: React.FC<GridCompProps> = ({ control, grid }) => {
+    const { fields, rows } = grid;
+    const { selectRow } = control;
     const { columns, styles } = getHeaderColumns(fields);
 
     if (!rows?.length) {
@@ -132,7 +147,7 @@ const GridFormBody = ({ control }) => {
     return (
         <main className="divide-y divide-gray-200" >
             {
-                rows.map((row) => (
+                rows.map((row, index) => (
                     <div
                         key={row.id}
                         style={styles}
@@ -140,7 +155,7 @@ const GridFormBody = ({ control }) => {
                     >
                         <div className="px-3 py-2 flex items-center justify-center border-r border-gray-200 h-full" >
                             <Checkbox
-                                onCheckedChange={() => selectRow({ id: row.id })}
+                                onCheckedChange={() => selectRow({ id: row.id, fieldname: grid.gridName })}
                                 checked={row.checked}
                             />
                         </div>
@@ -164,9 +179,17 @@ const GridFormBody = ({ control }) => {
                                 >
                                     <Field
                                         field={field}
-                                        state={row}
-                                    // grid={store}
-                                    // gridUpdate={true}
+                                        handleChange={(value) => {
+                                            control.setRowValue({
+                                                fieldname: grid.gridName,
+                                                rowId: row.id,
+                                                name: field.name,
+                                                value: value
+                                            })
+                                        }}
+                                        value={row.fields?.[field.name].value as string}
+                                    // state={row}
+
                                     />
                                 </div>
                             ))}
@@ -174,7 +197,7 @@ const GridFormBody = ({ control }) => {
                         <div className="px-3 flex items-center justify-center h-full" >
                             <button
                                 type="button"
-                                onClick={() => setExpandedRow(row)}
+                                // onClick={() => setExpandedRow(row)}
                                 className="p-1.5 rounded-full transition-all duration-150 cursor-pointer opacity-70 hover:opacity-100"
                                 title="Edit row"
                             >
@@ -188,9 +211,11 @@ const GridFormBody = ({ control }) => {
     );
 };
 
-const GridFormFooter = ({ control }) => {
-    const { addRow, removeRow, rows, selectedRowsCount } = control;
-    const selectedRows = rows.filter(row => row.checked);
+const GridFormFooter = ({ control, grid }) => {
+    const { rows, selectedRowsCount } = grid;
+    const { addRow, removeRow, } = control;
+    const selectedRows = rows?.filter(row => row.checked);
+
 
     return (
         <div className="flex items-center" >
@@ -198,14 +223,14 @@ const GridFormFooter = ({ control }) => {
                 {selectedRowsCount > 0 && (
                     <Button
                         variant="destructive"
-                        onClick={() => removeRow(selectedRows.map(row => row.id))}
+                        onClick={() => removeRow(grid.gridName, selectedRows.map(row => row.id))}
                     >
                         <Trash2Icon />
                         Delete
                     </Button>
                 )}
 
-                <Button onClick={() => addRow()}> Add Row </Button>
+                <Button onClick={() => addRow(grid.gridName)}> Add Row </Button>
             </div>
         </div>
     );
@@ -219,8 +244,13 @@ interface GridFormProps {
 }
 
 const GridForm: React.FC<GridFormProps> = (props) => {
+    if (!props.grid && !props.control) return <></>;
+
+    console.log(props.grid)
+    console.log(props.control)
+
     return (
-        <div className="" >
+        <>
             <div className={
                 cn(
                     "border rounded-md mb-4",
@@ -231,9 +261,120 @@ const GridForm: React.FC<GridFormProps> = (props) => {
                 <GridFormHeader control={props.control} grid={props.grid} />
                 <GridFormBody control={props.control} grid={props.grid} />
             </div>
-            <GridFormFooter control={props.control} />
-        </div>
+            <GridFormFooter control={props.control} grid={props.grid} />
+        </>
     )
 }
 
+interface FieldProps {
+    field: TypeField;
+    handleChange: (value: string) => void;
+    handleBlur: (value: string) => void;
+    value: string;
+    // gridUpdate?: boolean;
+
+    // grid: TypeGridFormStore;
+}
+
+
+
+const Field: React.FC<FieldProps> = (props) => {
+    const { field } = props;
+    // const [className, setClassName] = useState<string>("h-full w-full shadow-none border-none rounded-none");
+    // const { field, onBlur, state, grid, } = props;
+
+    const className = "h-full w-full shadow-none border-none rounded-none";
+    // const fieldState = state.fields[field.name];
+    const value = props.value;
+
+
+    const handleChange = (value) => {
+        props.handleChange(value);
+    };
+
+
+    // useEffect(() => {
+    //     if (!fieldState?.hasError) {
+    //         setClassName("h-full w-full shadow-none border-none rounded-none");
+    //         return;
+    //     }
+    //     setClassName("shadow-none border-none rounded-none border-destructive ring-destructive/50 ring-[3px]");
+    // }, [fieldState?.hasError]);
+
+    if (field.type === "checkbox") {
+        return (
+            <Checkbox
+                name={field.name}
+                // id={state.id}
+                checked={Boolean(value)}
+                onCheckedChange={(checked) => handleChange?.(checked)}
+            />
+        );
+    }
+
+    if (field.type === "select") {
+        return (
+            <Select
+
+                value={value as string || ""}
+                onValueChange={(val) => handleChange?.(val)}
+
+            >
+                <SelectTrigger className={cn("shadow-none border-none", className)}
+                // onBlur={() => onBlur?.(value)}
+                // id={state.id}
+                >
+                    <SelectValue placeholder={field.placeholder || "Select"} />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectGroup>
+                        {field.options?.map((option) => (
+                            <SelectItem className="text-sm" key={option.value} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectGroup>
+                </SelectContent>
+            </Select>
+        );
+    }
+
+    if (field.type === "autocomplete") {
+        return (
+            <AutoComplete
+                label={field.label}
+                className={cn("border-none shadow-none", className)}
+                onChange={handleChange}
+                options={field.options}
+                value={value as OptionType}
+                getOptions={field.getOptions}
+            // renderOption={field.renderOption}
+            />
+        );
+    }
+
+    if (field.type === "date") {
+        return (
+            <DatePicker onChange={handleChange} name={field.name} value={value as Date | null}
+                className={cn("border-none shadow-none h-full", className)} />
+        )
+    }
+    return (
+        <Input
+            name={field.name}
+            // id={state.id}
+            readOnly={field.readOnly}
+            className={cn("border-none shadow-none", className)}
+            type={field.type}
+            onChange={(event) => handleChange?.(event.target.value)}
+            // onBlur={(event) => onBlur?.(event.target.value)}
+            defaultValue={value as string || ""}
+            value={value as string}
+            placeholder={field.placeholder}
+        />);
+
+};
+
 export { GridForm };
+
+

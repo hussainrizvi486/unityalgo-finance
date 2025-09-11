@@ -20,6 +20,7 @@ export type DFState = Record<string, DFFieldState>;
 
 
 export interface TypeGridFormStore {
+    gridName: string;
     fields: TypeField[];
     rows: GridFormRowState[];
     expandedRow: GridFormRowState | null;
@@ -40,8 +41,8 @@ export interface TypeDFStore {
     // actions
     setValue: ({ name, value }: { name: string, value: FieldValue }) => void;
     setError: ({ name, hasError, message }: { name: string, hasError: boolean, message: string }) => void;
-
-
+    selectRow: ({ fieldname, selectAll, id }: { fieldname: string; selectAll?: boolean; id?: string }) => void;
+    setRowValue: ({ fieldname, rowId, name, value }: { fieldname: string, rowId: string, name: string, value: FieldValue }) => void;
     grids: Record<string, TypeGridFormStore>;
 
     validate: () => void
@@ -92,9 +93,10 @@ const createGrid = (field: TypeField, values?: DFValues): TypeGridFormStore => {
 
     const initialRows = values?.map((row, index) =>
         createInitialGridRow(fields, row, index + 1)
-    );
+    ) || [];
 
     return {
+        gridName: field.name,
         fields: fields,
         rows: initialRows,
         expandedRow: null,
@@ -107,7 +109,7 @@ const createGrid = (field: TypeField, values?: DFValues): TypeGridFormStore => {
 const useDFStore = create<TypeDFStore>((set, get) => ({
     values: {},
     state: {},
-    isValid: true,  
+    isValid: true,
     grids: {},
     fields: [],
 
@@ -263,7 +265,7 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
         }
 
         if (selectAll) {
-            const updatedRows = store[fieldname]?.rows.map((r) => ({
+            const updatedRows = store.grids[fieldname]?.rows.map((r) => ({
                 ...r,
                 checked: !!selectAll,
             })) || [];
@@ -272,14 +274,16 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
             return;
         }
 
-        const updatedRow = store[fieldname]?.rows.map((r) => r.id === id ? { ...r, checked: !r.checked } : r) || [];
+        const updatedRow = store.grids[fieldname]?.rows.map((r) => r.id === id ? { ...r, checked: !r.checked } : r) || [];
         const selectedRowsCount = updatedRow.filter((r) => r.checked).length;
         const allRowsSelected = selectedRowsCount === updatedRow.length;
         const updated = { ...store.grids[fieldname], rows: updatedRow, allRowsSelected, selectedRowsCount };
+        console.log(updated);
+        console.log(store.grids)
         set({ grids: { ...store.grids, [fieldname]: updated } })
     },
 
-    removeRow: (fieldname, id) => {
+    removeRow: (fieldname, ids) => {
         const store = get();
 
         const field = store.state[fieldname];
@@ -287,7 +291,7 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
             return
         }
 
-        const updatedRow = store[fieldname]?.rows.filter((r) => r.id !== id) || [];
+        const updatedRow = store[fieldname]?.rows.filter((r) => !ids.includes(r.id)) || [];
         const updated = { ...store.grids[fieldname], rows: updatedRow };
 
         set({ grids: { ...store.grids, [fieldname]: updated } })

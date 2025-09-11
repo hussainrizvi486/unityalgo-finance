@@ -8,12 +8,13 @@ import './index.css';
 import Application from './app.tsx';
 
 
+
 createRoot(document.getElementById('root')!).render(
-  <>
+  <StrictMode>
     <QueryClientProvider client={queryClient}>
       <Provider store={store}>
         <Application />
       </Provider>
     </QueryClientProvider>
-  </>,
+  </StrictMode>,
 )
