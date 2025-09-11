@@ -392,11 +392,6 @@ const GridFormProvider: React.FC<GridFormProviderProps> = (props) => {
 
     useEffect(() => {
 
-        store.init(props.fields, props.values, props.control);
-        props.addGrid?.(store);
-
-        // Set up subscription AFTER initialization
-
         const unsubscribe = gridFormStore.subscribe(
             (updated, prev) => {
                 const { rows, fields } = updated;
@@ -410,12 +405,20 @@ const GridFormProvider: React.FC<GridFormProviderProps> = (props) => {
 
                             if (prevValue !== newValue) {
                                 const field = fields.find(f => f.name === fieldName);
+                                // console.log("onChange called ",
+                                //     {
+                                //         name: field.name,
+                                //         index: row.index,
+                                //         value: row.fields[fieldName]?.value,
+                                //     }
+                                // )
+                                // console.log(row.values)
                                 // Pass the current store instance
                                 field?.onChange?.({
-                                    "grid": store,
+                                    "grid": updated,
                                     "name": field.name,
                                     "index": row.index,
-                                    "dataform": store.control
+                                    "dataform": updated.control
                                 });
                             }
                         });
@@ -424,14 +427,18 @@ const GridFormProvider: React.FC<GridFormProviderProps> = (props) => {
             }
         );
         return unsubscribe;
-    }, [props.fields, props.onChange]);
 
+    }, [props.onChange]);
 
+    useEffect(() => {
+        store.init(props.fields, props.values, props.control);
+    }, [props.fields, props.values])
 
+    // useEffect(() => {
+    //     props.addGrid?.(store);
+    // }, [])
 
-
-    if (!store.fields) return null;
-
+    // if (!store.fields) return null;
     return (
         <GridFormContext.Provider value={{ store }}>
             {props.children}
@@ -485,7 +492,6 @@ const GridFormHeader = () => {
 };
 
 
-// Body Component
 const GridFormBody = () => {
     const store = useGridForm();
     const { fields, rows, selectRow, expandedRow, setExpandedRow } = store;
@@ -562,7 +568,6 @@ const GridFormBody = () => {
     );
 };
 
-// Footer Component
 const GridFormFooter = () => {
     const { addRow, removeRow, rows, selectedRowsCount } = useGridForm();
     const selectedRows = rows.filter(row => row.checked);
@@ -638,12 +643,12 @@ export const Demo = () => {
         dataform?: TypeDFStore;
     }) {
 
-        console.log(args.grid)
+
         args.grid.rows.forEach((row) => {
             const amount = decimal(row.values.quantity) * decimal(row.values.rate);
-            console.log(amount)
-            // grid.setValue({ id: row.id, name: "amount", value: amount });
-        })
+            args.grid.setValue({ id: row.id, name: "amount", value: amount });
+        });
+
 
     }
 

@@ -172,6 +172,7 @@ const FieldInput: React.FC<DFInputFieldProps> = React.memo((props) => {
             onChange={(event) => onChange(event.target.value)}
             onBlur={onBlur}
             value={value as string || ""}
+            readOnly={field.readOnly}
             placeholder={field.placeholder}
         />
     )

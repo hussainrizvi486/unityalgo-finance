@@ -1,260 +1,231 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
-import toast from "react-hot-toast";
-
+import React, { useEffect, useLayoutEffect } from "react";
+import { create } from "zustand";
+import type { FieldValue, FormValues, TypeField } from "./types";
+import type { TypeGridFormStore, } from "../grid-form/zustand-grid-form";
 import { Button } from "../ui/button";
-import type { FieldValue, TypeDFContext, DFValues, TypeDFState, TypeField } from "./types";
-
+import { Field } from "./zustand-field";
+import { buildLayout } from "./utils";
 import { Column, Section } from "./components/layout";
-import { Field } from "./components/field.tsx";
-import { buildLayout } from "./utils.ts";
 
-const DFContext = React.createContext<TypeDFContext>({
-    title: "",
-    getValues: () => ({}),
+
+export type DFFieldState = {
+    hasError: boolean;
+    error: string;
+    value: FieldValue;
+    field: TypeField;
+}
+
+type DFState = Record<string, DFFieldState>;
+
+
+export interface TypeDFStore {
+    values: FormValues;
+    state: DFState;
+    fields: TypeField[];
+    isValid: boolean;
+
+    grids: Record<string, TypeGridFormStore>;
+
+    // actions
+    setValue: ({ name, value }: { name: string, value: FieldValue }) => void;
+    setError: ({ name, hasError, message }: { name: string, hasError: boolean, message: string }) => void;
+
+
+    addGrid: (name: string, grid: TypeGridFormStore) => void;
+    removeGrid: (name: string) => void;
+    validate: () => void
+    getValues: () => FormValues;
+    validateField: ({ field }: { field: TypeField }) => boolean | void;
+    reset: () => void;
+    onSave?: (values: FormValues) => void;
+    triggerSave?: () => void;
+
+    init: ({ values, fields, handleSave }: { values?: FormValues, fields: TypeField[], handleSave?: (values: FormValues) => void }) => void;
+}
+
+
+
+
+const useDFStore = create<TypeDFStore>((set, get) => ({
     values: {},
+    grids: {},
     fields: [],
     state: {},
-});
+    isValid: true,
+    onSave: undefined,
+    addGrid: (name: string, grid) => {
+        set((prev) => ({
+            grids: { ...prev.grids, [name]: grid }
+        }))
+    },
 
-const getFormFields = (fields: TypeField[]): TypeField[] => {
-    return fields.filter(field => !field.columnBreak && !field.sectionBreak);
-}
+    removeGrid: (name: string) => {
+        set((prev) => ({
+            grids: Object.fromEntries(Object.entries(prev.grids).filter(([k]) => k !== name))
+        }))
+    },
+    getValues: () => get().values,
 
-const getInitialState = (fields: TypeField[], values?: DFValues | null): TypeDFState => {
-    const state: TypeDFState = {};
+    reset: () => {
+        const { fields } = get();
+        const initialValues: FormValues = {};
+        const initialState: DFState = {};
+
+        fields.forEach((f) => {
+            const value = f.defaultValue ?? null;
+            initialValues[f.name] = value;
+            initialState[f.name] = {
+                hasError: false,
+                error: "",
+                value,
+                field: f,
+            };
+        });
 
 
-    fields.forEach((field) => {
-        let value = values?.[field.name] || field.defaultValue || null;
+        set({ values: initialValues, state: initialState, isValid: true });
+    },
 
-        if (["number", "float", "currency", "decimal"].includes(field.type) && (value == null || value == undefined)) {
-            value = 0; // Ensure numeric fields default to 0
+    setError: ({ name, hasError, message }) => {
+        set((prev) => ({
+            state: {
+                ...prev.state,
+                [name]: {
+                    ...prev.state[name],
+                    hasError,
+                    error: message,
+                },
+            },
+        }));
+    },
+
+    setValue: ({ name, value }) => {
+
+        const field = get().fields.find((f) => f.name === name);
+        if (!field) return;
+
+        field.onChange?.(get());
+        return set((prev) => ({
+            values: { ...prev.values, [name]: value },
+            state: {
+                ...prev.state,
+                [name]: {
+                    ...prev.state[name],
+                    value,
+                },
+            },
+        }))
+    },
+
+    validateField: ({ field }: { field: TypeField }) => {
+        const { state } = get();
+        const fieldState = state[field.name];
+        if (!fieldState) return true;
+
+        if (field.required && !fieldState.value) {
+            get().setError({
+                name: field.name,
+                hasError: true,
+                message: `${field.label ?? field.name} is required`,
+            });
+            return false;
         }
+        return true;
+    },
 
-        if ((value == null || value == undefined) && field.type === "checkbox") {
-            value = false; // Ensure checkbox defaults to false
-        }
+    validate: () => {
+        const { fields, validateField, grids } = get();
+        Object.keys(grids).forEach((keys) => {
+            grids[keys].addRow();
+        })
 
-        state[field.name] = {
-            value: value,
-            hasError: false,
-            error: "",
-            field: field
-        };
-    })
+        let valid = true;
+        fields.forEach((field) => {
+            if (!validateField({ field })) valid = false;
+        });
+        set({ isValid: valid });
+        return valid;
+    },
 
-    return state
-}
+    init: ({ fields, values, handleSave }) => {
+        const initialValues: FormValues = {};
+        const state: DFState = {};
 
-interface DataFormProviderProps {
-    children: React.ReactNode;
+        fields.forEach((field) => {
+            if (field.type === 'section' || field.type === 'column') return;
+
+            const value = values?.[field.name] ?? field.defaultValue ?? null;
+            initialValues[field.name] = value;
+            state[field.name] = {
+                hasError: false,
+                error: "",
+                value,
+                field,
+            };
+        });
+
+        // console.error(state);
+        set({
+            fields,
+            values: initialValues,
+            state,
+            isValid: true,
+            onSave: handleSave,
+        });
+    },
+
+    triggerSave: () => {
+        const { validate, onSave, values } = get();
+        validate();
+
+        if (onSave) onSave(values);
+    },
+}));
+
+
+interface DataFormProps {
     fields: TypeField[];
-    onSave?: (values: DFValues) => void;
-    values?: DFValues | null;
     title: string
-
-}
-
-export const isEmpty = (value: FieldValue): boolean => {
-    if (value === null || value === undefined) return true;
-    if (typeof value === 'string') return value.trim() === '';
-    if (typeof value === 'number') return false;
-    if (typeof value === 'boolean') return false;
-    if (Array.isArray(value)) return value.length === 0;
-    return false;
-}
-
-const DataFormProvider: React.FC<DataFormProviderProps> = ({ children, fields, values, onSave, title }) => {
-    const formFields: Array<TypeField> = useMemo(() => getFormFields(fields), [fields]);
-
-    const [state, setState] = useState<TypeDFState>(getInitialState(formFields, values));
-    const [isValid, setIsValid] = useState<boolean>(false);
-
-
-    const getValues = useCallback((): DFValues => {
-        const values: DFValues = {};
-        Object.keys(state).forEach(key => values[key] = state[key].value);
-        return values;
-    }, [state]);
-
-    const setValue = useCallback((name: string, value: FieldValue) => {
-        setState((prev) => {
-            if (prev[name]?.value === value) return prev;
-            return {
-                ...prev,
-                [name]: { ...prev[name], value: value, hasError: false, error: "" }
-            };
-        });
-    }, []);
-
-    const setError = useCallback((name: string, hasError: boolean = false, message: string = "") => {
-        setState(prev => {
-            const state = prev[name];
-            if (state?.hasError === hasError && state?.error === message) {
-                return prev;
-            }
-
-            return {
-                ...prev,
-                [name]: { ...state, hasError: hasError, error: message }
-            };
-        });
-    }, []);
-
-
-
-    const validateFieldType = useCallback((field: TypeField, value: FieldValue): { isValid: boolean; message: string } => {
-        switch (field.type) {
-            case "number":
-                if (typeof value === 'string' && isNaN(Number(value))) {
-                    return { isValid: false, message: `${field.label} must be a valid number` };
-                }
-                break;
-            case "float":
-            case "currency":
-                if (typeof value === 'string' && (isNaN(parseFloat(value)) || !isFinite(parseFloat(value)))) {
-                    return { isValid: false, message: `${field.label} must be a valid decimal number` };
-                }
-                break;
-            case "date":
-
-                if (value && !(value instanceof Date) && isNaN(Date.parse(value as string))) {
-                    return { isValid: false, message: `${field.label} must be a valid date` };
-                }
-                break;
-        }
-        return { isValid: true, message: "" };
-    }, []);
-
-    const validateField = useCallback((name: string): boolean => {
-        const field = formFields.find(f => f.name === name);
-        const fieldState = state[name];
-
-        if (!field || !fieldState) return false;
-        let hasError = false;
-        let errorMessage = "";
-        const isRequired = field.requiredOn ? field.requiredOn(getValues()) : field.required;
-
-        if (isRequired && isEmpty(fieldState.value)) {
-            hasError = true;
-            errorMessage = `${field.label} is required`;
-        }
-        else if (!isEmpty(fieldState.value)) {
-            const validationResult = validateFieldType(field, fieldState.value);
-            hasError = !validationResult.isValid;
-            errorMessage = validationResult.message;
-        }
-
-        if (!hasError && field.validate) {
-            const customValidation = field.validate(fieldState.value);
-            if (typeof customValidation === 'string') {
-                hasError = true;
-                errorMessage = customValidation;
-            } else if (typeof customValidation === 'boolean' && !customValidation) {
-                hasError = true;
-                errorMessage = `${field.label} is invalid`;
-            }
-        }
-
-        setError(name, hasError, errorMessage);
-        return !hasError;
-    }, [formFields, state, isEmpty, validateFieldType, setError]);
-
-    const handleSave = useCallback(() => {
-
-        formFields.forEach(field => {
-            validateField(field.name);
-        });
-
-        if (!isValid) {
-            return;
-        }
-
-        const values = getValues();
-        onSave?.(values);
-    }, [formFields, validateField, isValid, getValues, onSave]);
-
-    useEffect(() => {
-        setIsValid(!Object.values(state).some(fieldState => fieldState.hasError));
-    }, [state]);
-
-
-    const submitForm = useCallback(() => {
-        console.log(getValues())
-        formFields.forEach(field => {
-            validateField(field.name);
-        });
-
-        if (!isValid) {
-            toast.error("Please fix the errors in the form before submitting.");
-            // return;
-        }
-
-        const values = getValues();
-        onSave?.(values);
-    }, [formFields, validateField, isValid, getValues, onSave]);
-
-    // useEffect(() => {
-    //     setState(getInitialState(formFields, values));
-    // }, [formFields]);
-    const contextValue = useMemo(() => ({
-        fields: fields,
-        // triggerSave: handleSave,
-        getValues,
-        setValue,
-        submitForm,
-        setError,
-        values,
-        state,
-        title,
-        isValid
-    }), [fields, handleSave, getValues, setValue, setError, values, state, isValid, submitForm, title]);
-
-    return (
-        <DFContext.Provider value={contextValue}>
-            {children}
-        </DFContext.Provider>
-    )
-}
-
-const useDFContext = () => {
-    const context = React.useContext(DFContext);
-    if (!context) {
-        throw new Error("useDFContext must be used within a DataFormProvider");
-    }
-    return context;
+    values?: Record<string, string>;
+    onSave?: (values: Record<string, string>) => void;
 }
 
 
+export const DataForm: React.FC<DataFormProps> = (props) => {
+    const { fields, values } = props;
+    const form = React.useMemo(() => buildLayout(props.fields), [props.fields]);
+    const store = useDFStore();
 
-const DataForm: React.FC = () => {
-    const form = useDFContext();
-    const formLayout = useMemo(() => buildLayout(form.fields), [form.fields]);
 
-    return (<div>
+
+    useLayoutEffect(() => {
+        store.init({ fields, values, });
+    }, [fields, values]);
+
+
+    if (!store.fields.length) return <></>
+
+    return <div>
         <div className="flex justify-between items-center mb-4">
-            <div className="text-2xl font-bold">{form.title}</div>
+            <div className="text-2xl font-bold">{props.title}</div>
             <div>
-                <Button onClick={form.submitForm}>Save</Button>
+                <Button onClick={store.triggerSave}>Save</Button>
             </div>
         </div>
 
         <div className="border border-input py-4 rounded-md" >
-            {formLayout.map((section, index) => (
+            {form.map((section, index) => (
                 <Section key={index} label={section.label || ""}>
                     {section.columns?.map(((col, k) => (
                         <Column key={k} >
                             {col.map((field) => (
-                                <Field form={form} field={field} key={field.name} />
+                                <Field field={field} key={field.name} store={store} />
                             ))}
                         </Column>
                     )))}
                 </Section>
             ))}
-
         </div>
-    </div>)
+    </div>
 }
 
-
-export { DataFormProvider, DataForm };

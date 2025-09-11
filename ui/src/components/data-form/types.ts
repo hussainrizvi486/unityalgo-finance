@@ -1,7 +1,16 @@
-import type { TypeGridFormStore } from "../grid-form/zustand-grid-form";
+import type { TypeGridFormStore } from "./components/grid-form/index";
+
 import type { TypeField as TypeSubField } from "../table-input/types";
 import type { TypeDFStore } from "./zustand-version";
 
+export type DFFieldState = {
+    hasError: boolean;
+    error: string;
+    value: FieldValue;
+    field: TypeField;
+    grid?: TypeGridFormStore
+}
+export type DFState = Record<string, DFFieldState>;
 export type TypeOption = { label: string; value: string; };
 export type FieldType = "text"
     | "textarea"

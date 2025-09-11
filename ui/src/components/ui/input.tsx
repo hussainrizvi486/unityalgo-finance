@@ -2,7 +2,7 @@ import * as React from "react"
 import { cn } from "../../utils/index";
 import { decimal, integer } from "../../utils";
 
-type InputType = "decimal" | "percentage" | "int" | "currency" | "text" | "email" | "password";
+type InputType = "decimal" | "percentage" | "number" | "currency" | "text" | "email" | "password";
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
     name?: string;
     type: InputType;
@@ -32,9 +32,8 @@ const formatValue = (value: string, type: InputType): string | number => {
         const numValue = decimal(cleanValue);
         return typeof numValue === 'number' ? numValue : cleanValue;
     }
-    if (type === "int") {
-        const numValue = integer(cleanValue);
-        return typeof numValue === 'number' ? numValue : cleanValue;
+    if (type === "number") {
+        return integer(cleanValue);
     }
     if (type === "currency") {
         const numValue = decimal(cleanValue);
@@ -47,7 +46,7 @@ const formatValue = (value: string, type: InputType): string | number => {
     return value;
 }
 
-const parseValue = (value: string, type: InputType): string => {
+const parseValue = (value: string, type: InputType): string | number => {
     if (type === "text") return value;
     return String(value).replace(/[$,%]/g, '');
 }
@@ -68,8 +67,8 @@ const displayValue = (value: string | number, type: InputType, isFocused: boolea
     if (type === "decimal") {
         return typeof value === 'number' ? value.toFixed(2) : String(value);
     }
-    if (type === "int") {
-        return typeof value === 'number' ? value.toString() : String(value);
+    if (type === "number") {
+        return integer(value)
     }
 
     return String(value);
@@ -146,7 +145,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 type="text"
                 className={cn(
                     "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground  border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 shadow-xs transition-[color,box-shadow] outline-none text-sm file:inline-flex file:h-7 file:border-0 file:bg-transparent  file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50  focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20",
-                    isNumericType(type) && props.readOnly ? "text-right bg-accent" : "",
+                    props.readOnly || props.disabled ? "bg-accent" : "",
                     className
                 )}
                 ref={ref}

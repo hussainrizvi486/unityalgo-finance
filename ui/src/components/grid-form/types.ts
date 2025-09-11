@@ -36,6 +36,9 @@ export type FieldTypeMap = {
     column: never;
 };
 
+
+export type GridFieldChangeHandler = (params: { grid: TypeGridFormStore; name: string; index: number, dataform: TypeDFStore }) => void;
+
 export type FieldValue<T extends FieldType = FieldType> = FieldTypeMap[T] | null | undefined;
 export interface TypeField<T extends FieldType = FieldType> {
     name: string;
@@ -48,9 +51,6 @@ export interface TypeField<T extends FieldType = FieldType> {
 
     options?: TypeOption[];
     placeholder?: string;
-
-    sectionBreak?: boolean;
-    columnBreak?: boolean;
 
     readOnly?: boolean
     hidden?: boolean

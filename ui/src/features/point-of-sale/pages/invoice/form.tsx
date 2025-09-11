@@ -1,41 +1,34 @@
 import moment from "moment";
 import { data, useParams } from "react-router-dom";
 import { DataForm, type TypeDFStore } from "@/components/data-form/zustand-version";
-import type { GridFormState, TypeField } from "@/components/grid-form/types";
+import type { GridFieldChangeHandler, GridFormState, TypeField } from "@/components/grid-form/types";
 import api from "@/api";
 import { useQuery } from "@tanstack/react-query";
 import { Spinner } from "@/components/loaders/spinner";
 import { decimal } from "@/utils";
 import type { TypeGridFormStore } from "@/components/grid-form/zustand-grid-form";
-import { ConciergeBellIcon } from "lucide-react";
 
 
-function calculateItemTotals(grid: TypeGridFormStore, index: number, dataform: TypeDFStore) {
-    // console.log(grid, index, dataform);
-    console.log("Calculating totals for row index:", index);
-    console.log(grid);
-    // const row = grid.rows.find(row => row.index === index);
+
+const calculateTotal: GridFieldChangeHandler = (args) => {
+
+    args.grid.rows.forEach((row) => {
+        const amount = decimal(row.values.quantity) * decimal(row.values.price);
+        args.grid.setValue({ name: "amount", value: amount, id: row.id });
+    })
+
+    const totals = args.grid.rows.reduce((acc, row) => {
+        acc.quantity += decimal(row.values.quantity)
+        acc.amount += decimal(row.values.price) * decimal(row.values.quantity);
+        return acc;
+    }, { quantity: 0, amount: 0 })
 
 
-    // if (!row) { return; }
-
-    // const { quantity, price } = row.values;
-    // console.log(row.values);
-    // const amount = decimal(quantity) * decimal(price);
-
-    // grid.setValue({ name: "amount", value: amount, id: row.id });
-
-    // const totals = grid.rows.reduce((acc, row) => {
-    //     acc.quantity += decimal(row.values.quantity)
-    //     acc.amount += decimal(row.values.price) * decimal(row.values.quantity);
-    //     return acc;
-    // }, { quantity: 0, amount: 0 })
-
-    // console.log("totals", totals);
-
-    // dataform.setValue("total_quantity", totals.quantity);
-    // dataform.setValue("total_amount", totals.amount);
-    // dataform.setValue("grand_total", totals.amount);
+    args.dataform?.setValue({ name: "total_quantity", value: totals.quantity });
+    args.dataform?.setValue({ name: "total_amount", value: totals.amount });
+    args.dataform?.setValue({ name: "grand_total", value: totals.amount });
+    args.dataform?.setValue({ name: "outstanding_amount", value: totals.amount });
+    console.log(totals);
 
 }
 const fields: Array<TypeField> = [
@@ -233,8 +226,8 @@ const fields: Array<TypeField> = [
                 type: "decimal",
                 defaultValue: 1,
                 required: true,
-                onChange: ({ grid, name, index, dataform }) => {
-                    calculateItemTotals(grid, index, dataform);
+                onChange: (args) => {
+                    calculateTotal(args);
                 }
             },
             {
@@ -242,22 +235,16 @@ const fields: Array<TypeField> = [
                 name: "price",
                 type: "decimal",
                 required: true,
-                onChange: ({ grid, name, index, dataform }) => {
-                    calculateItemTotals(grid, index, dataform);
+                onChange: (args) => {
+                    calculateTotal(args);
                 }
-                // min: 0    
             },
             {
                 label: "Amount",
                 name: "amount",
                 type: "decimal",
                 readOnly: true,
-                // Calculate amount as quantity * rate
-                // calculate: (row: any) => {
-                //     const quantity = parseFloat(row.quantity) || 0;
-                //     const rate = parseFloat(row.rate) || 0;
-                //     return quantity * rate;
-                // }
+
             },
         ]
     },

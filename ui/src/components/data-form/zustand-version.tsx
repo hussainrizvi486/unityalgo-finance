@@ -1,15 +1,12 @@
 import { create } from "zustand";
-import type { FieldValue, FormValues, TypeField } from "./types";
-import type { TypeGridFormStore, } from "../grid-form/zustand-grid-form";
+import { Button } from "@/components/ui/button";
+
+import type { DFValues, FieldValue, FormValues, TypeField } from "./types";
 import React, { useEffect, useLayoutEffect } from "react";
-import { Button } from "../ui/button";
 import { Field } from "./zustand-field";
 import { buildLayout } from "./utils";
 import { Column, Section } from "./components/layout";
-
-
-
-// type DFValues = Record<string, FieldValue>;
+import type { GridFormRowState } from "../grid-form/types";
 
 
 export type DFFieldState = {
@@ -19,60 +16,108 @@ export type DFFieldState = {
     field: TypeField;
 }
 
-type DFState = Record<string, DFFieldState>;
+export type DFState = Record<string, DFFieldState>;
+
+
+export interface TypeGridFormStore {
+    fields: TypeField[];
+    rows: GridFormRowState[];
+    expandedRow: GridFormRowState | null;
+
+    // Computed values
+    allRowsSelected: boolean;
+    selectedRowsCount: number;
+
+}
 
 
 export interface TypeDFStore {
-    values: FormValues;
+    values: DFValues;
     state: DFState;
     fields: TypeField[];
     isValid: boolean;
 
-    grids: Record<string, TypeGridFormStore>;
     // actions
     setValue: ({ name, value }: { name: string, value: FieldValue }) => void;
     setError: ({ name, hasError, message }: { name: string, hasError: boolean, message: string }) => void;
 
 
+    grids: Record<string, TypeGridFormStore>;
 
-    addGrid: (name: string, grid: TypeGridFormStore) => void;
-    removeGrid: (name: string) => void;
     validate: () => void
-    getValues: () => FormValues;
+    getValues: () => DFValues;
     validateField: ({ field }: { field: TypeField }) => boolean | void;
     reset: () => void;
-    onSave?: (values: FormValues) => void;
-    triggerSave?: () => void;
+    onSave?: (values: DFValues) => void;
+    init: ({ values, fields, handleSave }: { values?: DFValues, fields: TypeField[], handleSave?: (values: DFValues) => void }) => void;
+    addRow: (fieldname: string, values?: Record<string, FieldValue>) => void;
 
-    init: ({ values, fields, handleSave }: { values?: FormValues, fields: TypeField[], handleSave?: (values: FormValues) => void }) => void;
 }
 
+const createInitialGridRow = (
+    fields: TypeField[],
+    values = {},
+    index: number
+): GridFormRowState => {
+    const row: GridFormRowState = {
+        id: crypto.randomUUID(),
+        index,
+        checked: false,
+        errors: {},
+        values: {},
+        fields: {},
+    };
 
+    fields.forEach((field) => {
+        if (['section', 'column', "table"].includes(field.type)) return;
+        const value = values[field.name] ?? field.defaultValue ?? null;
+
+        row.fields[field.name] = {
+            error: "",
+            hasError: false,
+            field,
+            value
+        };
+
+        row.values[field.name] = value;
+    });
+
+    return row;
+};
+
+
+
+const createGrid = (field: TypeField, values?: DFValues): TypeGridFormStore => {
+    const { fields } = field;
+
+    const initialRows = values?.map((row, index) =>
+        createInitialGridRow(fields, row, index + 1)
+    );
+
+    return {
+        fields: fields,
+        rows: initialRows,
+        expandedRow: null,
+        allRowsSelected: false,
+        selectedRowsCount: 0,
+    }
+}
 
 
 const useDFStore = create<TypeDFStore>((set, get) => ({
     values: {},
+    state: {},
+    isValid: true,  
     grids: {},
     fields: [],
-    state: {},
-    isValid: true,
-    onSave: undefined,
-    addGrid: (name: string, grid) => {
-        set((prev) => ({
-            grids: { ...prev.grids, [name]: grid }
-        }))
-    },
 
-    removeGrid: (name: string) => {
-        set((prev) => ({
-            grids: Object.fromEntries(Object.entries(prev.grids).filter(([k]) => k !== name))
-        }))
-    },
+
+
     getValues: () => get().values,
 
     reset: () => {
         const { fields } = get();
-        const initialValues: FormValues = {};
+        const initialValues: DFValues = {};
         const initialState: DFState = {};
 
         fields.forEach((f) => {
@@ -108,7 +153,7 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
         const field = get().fields.find((f) => f.name === name);
         if (!field) return;
 
-        field.onChange?.(get());
+        // field.onChange?.(get());
         return set((prev) => ({
             values: { ...prev.values, [name]: value },
             state: {
@@ -137,54 +182,151 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
         return true;
     },
 
-    validate: () => {
-        const { fields, validateField, grids } = get();
-        Object.keys(grids).forEach((keys) => {
-            grids[keys].addRow();
-        })
+
+    validate: (): boolean => {
+        const { fields, validateField } = get();
+
+
+        // Object.keys(grids).forEach((key) => {
+        //     grids[key].validate();
+        // });
 
         let valid = true;
         fields.forEach((field) => {
-            if (!validateField({ field })) valid = false;
+            if (field.type !== 'section' && field.type !== 'column') {
+                if (!validateField({ field })) valid = false;
+            }
         });
+
         set({ isValid: valid });
         return valid;
     },
 
     init: ({ fields, values, handleSave }) => {
-        const initialValues: FormValues = {};
+
+        const initialValues: DFValues = {};
         const state: DFState = {};
+        const grids: Record<string, TypeGridFormStore> = {};
 
         fields.forEach((field) => {
             if (field.type === 'section' || field.type === 'column') return;
-
             const value = values?.[field.name] ?? field.defaultValue ?? null;
             initialValues[field.name] = value;
+
             state[field.name] = {
                 hasError: false,
                 error: "",
                 value,
                 field,
-            };
+            }
+
+            if (field.type == "table" && field.fields?.length) {
+                grids[field.name] = createGrid(field, value);
+            }
         });
 
-        // console.error(state);
         set({
             fields,
             values: initialValues,
             state,
             isValid: true,
+            grids,
             onSave: handleSave,
         });
     },
 
-    triggerSave: () => {
-        const { validate, onSave, values } = get();
-        validate();
 
-        if (onSave) onSave(values);
+
+    addRow: (fieldname, values) => {
+        const store = get();
+        const field = store.state[fieldname];
+
+        if (!field) {
+            return
+        }
+        const updated = { ...store.grids[fieldname] };
+
+        const index = updated.rows.length + 1;
+        const newRow = createInitialGridRow(field.field.fields || [], values, index);
+        updated.rows.push(newRow);
+
+        set({ grids: { ...store.grids, [fieldname]: updated } })
+        // field.grid.rows
     },
+
+    selectRow: ({ fieldname, selectAll, id }) => {
+        const store = get();
+
+        const field = store.state[fieldname];
+        if (!field) {
+            return
+        }
+
+        if (selectAll) {
+            const updatedRows = store[fieldname]?.rows.map((r) => ({
+                ...r,
+                checked: !!selectAll,
+            })) || [];
+            const updated = { ...store.grids[fieldname], rows: updatedRows, allRowsSelected: !!selectAll, selectedRowsCount: updatedRows.length };
+            set({ grids: { ...store.grids, [fieldname]: updated } })
+            return;
+        }
+
+        const updatedRow = store[fieldname]?.rows.map((r) => r.id === id ? { ...r, checked: !r.checked } : r) || [];
+        const selectedRowsCount = updatedRow.filter((r) => r.checked).length;
+        const allRowsSelected = selectedRowsCount === updatedRow.length;
+        const updated = { ...store.grids[fieldname], rows: updatedRow, allRowsSelected, selectedRowsCount };
+        set({ grids: { ...store.grids, [fieldname]: updated } })
+    },
+
+    removeRow: (fieldname, id) => {
+        const store = get();
+
+        const field = store.state[fieldname];
+        if (!field) {
+            return
+        }
+
+        const updatedRow = store[fieldname]?.rows.filter((r) => r.id !== id) || [];
+        const updated = { ...store.grids[fieldname], rows: updatedRow };
+
+        set({ grids: { ...store.grids, [fieldname]: updated } })
+    },
+
+    setRowValue: ({ fieldname, rowId, name, value }: { fieldname: string, rowId: string, name: string, value: FieldValue }) => {
+        const store = get();
+        const field = store.state[fieldname];
+        const grid = store.grids[fieldname];
+
+        if (!field || !grid) {
+            return
+        }
+
+
+        const updatedRows = grid.rows.map((row) => {
+
+            if (row.id === rowId) {
+                const values = { ...row.values, [name]: value };
+                const updatedField = {
+                    ...row.fields[name],
+                    value: value,
+                    hasError: false,
+                    error: '',
+                }
+                row.fields[name] = updatedField;
+                return { ...row, values };
+            }
+
+            return row;
+        })
+
+
+        const updated = { ...grid, rows: updatedRows };
+        set({ grids: { ...store.grids, [fieldname]: updated } })
+    },
+
 }));
+
 
 
 interface DataFormProps {

@@ -10,7 +10,8 @@ import type { FieldValue, FormValues, FormState, TypeField } from "../types";
 // import { TableInput } from "../../table-input/index";
 // import { Button } from "../ui/button";
 import { DatePicker } from "../../ui/date-picker";
-import { GridForm } from "../../grid-form/grid-form";
+// import { GridForm } from "../../grid-form/grid-form";
+import { GridForm } from "./grid-form";
 
 
 interface FieldProps {
