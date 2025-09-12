@@ -7,6 +7,7 @@ import { Field } from "./zustand-field";
 import { buildLayout } from "./utils";
 import { Column, Section } from "./components/layout";
 import type { GridFormRowState } from "../grid-form/types";
+import { toast } from "react-hot-toast";
 
 
 export type DFFieldState = {
@@ -33,7 +34,7 @@ export interface TypeGridFormStore {
 
 
 export interface TypeDFStore {
-    values: DFValues;
+    // values: DFValues;
     state: DFState;
     fields: TypeField[];
     isValid: boolean;
@@ -49,7 +50,7 @@ export interface TypeDFStore {
     getValues: () => DFValues;
     validateField: ({ field }: { field: TypeField }) => boolean | void;
     reset: () => void;
-    triggerSave: (callback: (values: DFValues) => void) => void;
+    triggerSave: (callback?: (values: DFValues) => void) => void;
     // onSave: (values: DFValues, callback: (values: ) => void) => void;
 
     init: ({ values, fields, handleSave }: { values?: DFValues, fields: TypeField[], handleSave?: (values: DFValues) => void }) => void;
@@ -110,7 +111,7 @@ const createGrid = (field: TypeField, values?: DFValues): TypeGridFormStore => {
 
 
 const useDFStore = create<TypeDFStore>((set, get) => ({
-    values: {},
+    // values: {},
     state: {},
     isValid: true,
     grids: {},
@@ -137,7 +138,7 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
         });
 
 
-        set({ values: initialValues, state: initialState, isValid: true });
+        set({ state: initialState, isValid: true });
     },
 
     setError: ({ name, hasError, message }) => {
@@ -159,7 +160,7 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
 
         // field.onChange?.(get());
         return set((prev) => ({
-            values: { ...prev.values, [name]: value },
+            // values: { ...prev.values, [name]: value },
             state: {
                 ...prev.state,
                 [name]: {
@@ -194,21 +195,15 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
 
     validate: (): boolean => {
         const { fields, validateField } = get();
-
-
-        // Object.keys(grids).forEach((key) => {
-        //     grids[key].validate();
-        // });
-
+        console.log("validate called");
         let valid = true;
         fields.forEach((field) => {
             if (field.type !== 'section' && field.type !== 'column') {
-
                 if (!validateField({ field })) valid = false;
             }
         });
 
-        console.log(valid, get().values)
+
         set({ isValid: valid });
         return valid;
     },
@@ -352,13 +347,17 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
     },
 
     triggerSave: (callbackFn) => {
-        const { validate, values } = get();
+        const { validate, getValues } = get();
         const isValid = validate();
 
-        if (!isValid) return;
+        if (!isValid) {
+            toast.error("Please fix the errors before saving", {
+                position: "top-right",
+            });
+            return
+        };
 
-        console.log(values)
-        callbackFn(values);
+        callbackFn?.(getValues());
     },
 
 }));
@@ -379,13 +378,10 @@ export const DataForm: React.FC<DataFormProps> = (props) => {
     const store = useDFStore();
 
 
-
     useLayoutEffect(() => {
         store.init({ fields, values, });
     }, [fields, values]);
 
-
-    console.log(store.state);
 
     if (!store.fields.length) return <></>
 
@@ -393,7 +389,7 @@ export const DataForm: React.FC<DataFormProps> = (props) => {
         <div className="flex justify-between items-center mb-4">
             <div className="text-2xl font-bold">{props.title}</div>
             <div>
-                <Button onClick={() => store.validate()}>Save</Button>
+                <Button onClick={() => store.triggerSave(props.onSave)}>Save</Button>
             </div>
         </div>
 

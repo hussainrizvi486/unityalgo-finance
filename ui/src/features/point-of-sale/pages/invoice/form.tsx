@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import moment from "moment";
 import { data, useParams } from "react-router-dom";
 import { DataForm, type TypeDFStore } from "@/components/data-form/zustand-version";
@@ -35,7 +36,7 @@ const fields: Array<TypeField> = [
     {
         name: "details",
         type: "section",
-        sectionBreak: true,
+
         label: "Details"
     },
     {
@@ -98,7 +99,7 @@ const fields: Array<TypeField> = [
     },
     {
         label: "",
-        columnBreak: true,
+
         type: "column",
         name: "column_break_1",
     },
@@ -118,7 +119,7 @@ const fields: Array<TypeField> = [
     },
     {
         label: "",
-        columnBreak: true,
+
         type: "column",
         name: "column_break_2",
     },
@@ -185,7 +186,7 @@ const fields: Array<TypeField> = [
     {
         label: "",
         type: "section",
-        sectionBreak: true,
+
         name: "items_section",
     },
     {
@@ -251,7 +252,7 @@ const fields: Array<TypeField> = [
     {
         name: "totals_section",
         type: "section",
-        sectionBreak: true,
+
         label: "Totals"
     },
     {
@@ -269,7 +270,7 @@ const fields: Array<TypeField> = [
     },
     {
         label: "",
-        columnBreak: true,
+
         type: "column",
         name: "column_break_3",
     },
@@ -376,10 +377,16 @@ const InvoiceForm = () => {
 
     // Prepare form values
     const formValues = data || {};
+    const handleSave = (values: Record<string, any>) => {
+        // Handle form submission
+        console.log("Saving invoice:", values);
+    }
 
     return (
         <div className="mx-auto p-4">
-            <DataForm fields={fields} title="POS Invoice Zustand" values={formValues} />
+            <DataForm fields={fields} title="POS Invoice" values={formValues}
+                onSave={handleSave}
+            />
             {/* <DataFormProvider
                 fields={fields}
                 title={formTitle}

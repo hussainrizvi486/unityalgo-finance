@@ -44,7 +44,8 @@ class POSInvoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = POSInvoice
         fields = [
-            "pos_profile",
+            # "pos_profile",
+            "company",
             "customer",
             "items",
         ]

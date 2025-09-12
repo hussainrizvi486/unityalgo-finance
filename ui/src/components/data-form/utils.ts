@@ -12,7 +12,7 @@ export const isEmpty = (value: FieldValue): boolean => {
 
 const buildLayout = (fields: TypeField[]) => {
     const layout: TypeDFLayout = [];
-    const sections: TypeDFSection[] = fields.filter(field => field.sectionBreak)
+    const sections: TypeDFSection[] = fields.filter(field => field.type === "section");
 
     if (!sections.length) {
         const section: TypeDFSection = { label: '' };
@@ -20,7 +20,7 @@ const buildLayout = (fields: TypeField[]) => {
         let colIndex = 0;
 
         fields.forEach(field => {
-            if (field.columnBreak) {
+            if (field.type === "column") {
                 colIndex += 1;
                 columns.push([]);
             }
@@ -40,9 +40,9 @@ const buildLayout = (fields: TypeField[]) => {
 
         for (let i = startIndex + 1; i < fields.length; i++) {
             const field = fields[i];
-            if (field.sectionBreak) break;
+            if (field.type === "section") break;
 
-            if (field.columnBreak === true) {
+            if (field.type === "column") {
                 colIndex += 1;
                 columns.push([]);
             } else {

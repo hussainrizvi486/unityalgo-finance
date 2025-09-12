@@ -178,6 +178,8 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
         const { validate, onSave, values } = get();
         validate();
 
+        console.log("Values:", values);
+        console.log("Values:", get().getValues());
         if (onSave) onSave(values);
     },
 }));

@@ -1,6 +1,7 @@
 from django.utils import timezone
 from django.db import models
 from apps.accounting.models.customer import Customer
+from apps.accounting.models.company import Company
 from apps.stock.models import Product
 from .profile import POSProfile
 from .base import BaseModel, Branch
@@ -20,8 +21,9 @@ class POSInvoiceStatus(models.TextChoices):
 
 
 class POSInvoice(BaseModel):
-    invoice_no = models.CharField(max_length=255, unique=True)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    invoice_no = models.CharField(max_length=255, unique=True)
     posting_date = models.DateTimeField(default=timezone.now())
     is_return = models.BooleanField(default=False)
     status = models.CharField(

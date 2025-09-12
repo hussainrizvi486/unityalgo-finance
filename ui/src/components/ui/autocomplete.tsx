@@ -18,9 +18,9 @@ interface AutoCompleteProps {
     className?: string;
     options?: OptionType[];
     placeholder?: string;
-    value?: OptionType | null;
+    value?: string;
     getOptions?: () => Promise<{ label: string; value: string }[]>;
-    onChange?: (option: OptionType | null) => void;
+    onChange?: (value: string) => void;
     renderOption?: (option: OptionType) => React.ReactNode;
 }
 
@@ -36,14 +36,14 @@ const AutoCompleteOption: React.FC<AutoCompleteOptionProps> = (props) => {
 
     return (
         <div className='flex justify-between px-2 py-1.5 overflow-hidden items-center hover:bg-accent cursor-pointer rounded-md transition-colors'
-            onClick={() => props.onClick(props)}
+            onClick={() => props.onClick({ value: props.value, label: props.label })}
         >
 
             <div className='text-sm'>{props.label}</div>
             <CheckIcon
                 className={cn(
                     'mr-2 h-4 w-4',
-                    props.selected?.value === props.value ? 'opacity-100'
+                    props.selected === props.value ? 'opacity-100'
                         : 'opacity-0'
                 )}
             />
@@ -53,8 +53,9 @@ const AutoCompleteOption: React.FC<AutoCompleteOptionProps> = (props) => {
 
 const AutoComplete: React.FC<AutoCompleteProps> = (props) => {
     const [open, setOpen] = useState(false);
-    const [selected, setSelected] = useState<OptionType | null>(props.value || null);
+    const [selected, setSelected] = useState<string | null>(props.value);
     const [results, setResults] = useState<OptionType[]>(props.options || []);
+
     const [query, setQuery] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
@@ -66,8 +67,8 @@ const AutoComplete: React.FC<AutoCompleteProps> = (props) => {
         props.getOptions().then((data) => {
             setResults(data.map(option => ({ label: option.label, value: option.value })));
             if (props.value) {
-                const selectedOption = data.find(option => option.value === props.value?.value);
-                setSelected(selectedOption || null);
+                const selectedOption = data.find(option => option.value === props.value);
+                setSelected(selectedOption.value || null);
             }
             setIsLoading(false);
         }).catch(() => {
@@ -77,9 +78,9 @@ const AutoComplete: React.FC<AutoCompleteProps> = (props) => {
     }, [props])
 
     const handleSelect = React.useCallback((option: OptionType) => {
-        if (option.value === selected?.value) { setSelected(null); }
-        else { setSelected(option); }
-        props.onChange?.(option);
+        if (option.value === selected) { setSelected(null); }
+        else { setSelected(option.value); }
+        props.onChange?.(option.value);
         setOpen(false);
     }, [])
 
@@ -92,7 +93,7 @@ const AutoComplete: React.FC<AutoCompleteProps> = (props) => {
                 >
                     <div className='flex items-center justify-between gap-2'>
                         <div className='text-sm overflow-hidden text-ellipsis whitespace-nowrap '>
-                            {selected ? selected.label : props.placeholder || props.label || "Select an option"}
+                            {selected ? results.find((v) => v.value == selected).label : props.placeholder || props.label || "Select an option"}
                         </div>
 
                         <ChevronsUpDown className='size-4 shrink-0' />

@@ -6,6 +6,7 @@ import './index.css';
 // import Application from './app.tsx';
 // import { Provider } from 'react-redux'
 // import { store } from "./store"
+import { Toaster } from 'react-hot-toast';
 import { routeTree } from './routeTree.gen' // auto-generated
 
 import { RouterProvider, createRouter } from '@tanstack/react-router'
@@ -18,8 +19,11 @@ const router = createRouter({ routeTree })
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      {/* <Provider store={store}> */}
+          <Toaster />
+
       <RouterProvider router={router} />
+      {/* <Provider store={store}> */}
+      
       {/* </Provider> */}
     </QueryClientProvider>
   </StrictMode >,
