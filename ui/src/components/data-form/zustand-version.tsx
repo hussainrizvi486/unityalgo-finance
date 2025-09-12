@@ -28,7 +28,7 @@ export interface TypeGridFormStore {
     // Computed values
     allRowsSelected: boolean;
     selectedRowsCount: number;
-
+    hasError: boolean;
 }
 
 
@@ -45,11 +45,13 @@ export interface TypeDFStore {
     setRowValue: ({ fieldname, rowId, name, value }: { fieldname: string, rowId: string, name: string, value: FieldValue }) => void;
     grids: Record<string, TypeGridFormStore>;
 
-    validate: () => void
+    validate: () => boolean
     getValues: () => DFValues;
     validateField: ({ field }: { field: TypeField }) => boolean | void;
     reset: () => void;
-    onSave?: (values: DFValues) => void;
+    triggerSave: (callback: (values: DFValues) => void) => void;
+    // onSave: (values: DFValues, callback: (values: ) => void) => void;
+
     init: ({ values, fields, handleSave }: { values?: DFValues, fields: TypeField[], handleSave?: (values: DFValues) => void }) => void;
     addRow: (fieldname: string, values?: Record<string, FieldValue>) => void;
 
@@ -96,6 +98,7 @@ const createGrid = (field: TypeField, values?: DFValues): TypeGridFormStore => {
     ) || [];
 
     return {
+        hasError: false,
         gridName: field.name,
         fields: fields,
         rows: initialRows,
@@ -151,7 +154,6 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
     },
 
     setValue: ({ name, value }) => {
-
         const field = get().fields.find((f) => f.name === name);
         if (!field) return;
 
@@ -163,6 +165,8 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
                 [name]: {
                     ...prev.state[name],
                     value,
+                    hasError: false,
+                    error: "",
                 },
             },
         }))
@@ -172,6 +176,9 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
         const { state } = get();
         const fieldState = state[field.name];
         if (!fieldState) return true;
+        if (field.type == "table") {
+            // const grid = get().grids[field.name];
+        }
 
         if (field.required && !fieldState.value) {
             get().setError({
@@ -196,15 +203,17 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
         let valid = true;
         fields.forEach((field) => {
             if (field.type !== 'section' && field.type !== 'column') {
+
                 if (!validateField({ field })) valid = false;
             }
         });
 
+        console.log(valid, get().values)
         set({ isValid: valid });
         return valid;
     },
 
-    init: ({ fields, values, handleSave }) => {
+    init: ({ fields, values }) => {
 
         const initialValues: DFValues = {};
         const state: DFState = {};
@@ -233,7 +242,7 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
             state,
             isValid: true,
             grids,
-            onSave: handleSave,
+            // onSave: handleSave,
         });
     },
 
@@ -253,7 +262,6 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
         updated.rows.push(newRow);
 
         set({ grids: { ...store.grids, [fieldname]: updated } })
-        // field.grid.rows
     },
 
     selectRow: ({ fieldname, selectAll, id }) => {
@@ -278,8 +286,8 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
         const selectedRowsCount = updatedRow.filter((r) => r.checked).length;
         const allRowsSelected = selectedRowsCount === updatedRow.length;
         const updated = { ...store.grids[fieldname], rows: updatedRow, allRowsSelected, selectedRowsCount };
-        console.log(updated);
-        console.log(store.grids)
+
+
         set({ grids: { ...store.grids, [fieldname]: updated } })
     },
 
@@ -308,7 +316,6 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
 
 
         const updatedRows = grid.rows.map((row) => {
-
             if (row.id === rowId) {
                 const values = { ...row.values, [name]: value };
                 const updatedField = {
@@ -324,9 +331,34 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
             return row;
         })
 
-
+        const values: Array<Record<string, FieldValue>> = [];
+        updatedRows.forEach((r) => values.push(r.values));
         const updated = { ...grid, rows: updatedRows };
-        set({ grids: { ...store.grids, [fieldname]: updated } })
+
+        set({
+            grids: {
+                ...store.grids, [fieldname]: updated
+            },
+            state: {
+                ...store.state,
+                [fieldname]: {
+                    ...store.state[fieldname],
+                    error: "",
+                    hasError: false,
+                    value: values
+                }
+            }
+        })
+    },
+
+    triggerSave: (callbackFn) => {
+        const { validate, values } = get();
+        const isValid = validate();
+
+        if (!isValid) return;
+
+        console.log(values)
+        callbackFn(values);
     },
 
 }));
@@ -353,13 +385,15 @@ export const DataForm: React.FC<DataFormProps> = (props) => {
     }, [fields, values]);
 
 
+    console.log(store.state);
+
     if (!store.fields.length) return <></>
 
     return <div>
         <div className="flex justify-between items-center mb-4">
             <div className="text-2xl font-bold">{props.title}</div>
             <div>
-                <Button onClick={store.triggerSave}>Save</Button>
+                <Button onClick={() => store.validate()}>Save</Button>
             </div>
         </div>
 

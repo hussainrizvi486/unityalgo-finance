@@ -1,5 +1,5 @@
 import { Button } from "../../../../components/ui/button";
-import { DataForm, DataFormProvider } from "../../../../components/data-form";
+// import { DataForm, DataFormProvider } from "../../../../components/data-form";
 import type { FormValues, TypeField } from "../../../../components/data-form/types";
 import axios from "axios";
 import { SERVER_URL } from "../../../../api";
@@ -152,8 +152,9 @@ const Form = () => {
         // console.log("Form values:", values);
     }
     return (
-        <DataFormProvider fields={fields} onSave={handleSave}>
-            <DataForm />
-        </DataFormProvider>
+        <></>
+        // <DataFormProvider fields={fields} onSave={handleSave}>
+        //     <DataForm />
+        // </DataFormProvider>
     )
 };

@@ -183,7 +183,7 @@ const fields: Array<TypeField> = [
         }
     },
     {
-        label: "Items",
+        label: "",
         type: "section",
         sectionBreak: true,
         name: "items_section",

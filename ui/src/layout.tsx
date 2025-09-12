@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Sidebar, SidebarProvider } from "./components/ui/sidebar"
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet } from "@tanstack/react-router";
 import { Settings2, ReceiptText, PackageOpen, House, DotIcon, UserRound, Banknote, ChevronDown, NetworkIcon, NotebookPen, WarehouseIcon, Package, Monitor as MonitorIcon, LogOut as LogOutIcon, Bell as BellIcon, Search as SearchIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "./components/ui/popover";
 
@@ -231,7 +231,6 @@ const Header = () => {
 }
 export const Layout = () => {
     const [open, setOpen] = useState(true)
-
     return <>
 
         <SidebarProvider open={open} onOpenChange={setOpen}>

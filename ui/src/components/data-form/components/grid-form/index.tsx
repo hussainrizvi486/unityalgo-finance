@@ -13,7 +13,7 @@ import {
     Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { FileTextIcon, PencilIcon, SettingsIcon, Trash2Icon } from "lucide-react";
+import { FileTextIcon, PencilIcon, ProportionsIcon, SettingsIcon, Trash2Icon } from "lucide-react";
 import { cn } from "@/utils";
 
 
@@ -32,6 +32,8 @@ interface TypeGridField<T extends FieldType = FieldType> {
     readOnly?: boolean
     hidden?: boolean
 
+    fields?: TypeGridField[];
+
     // onChange?: (params: { grid: TypeGridFormStore; name: string; index: number, dataform: TypeDFStore }) => void;
     // onBlur?: (params: { grid: TypeGridFormStore; name: string; index: number, dataform: TypeDFStore }) => void;
 
@@ -49,7 +51,7 @@ interface TypeGridField<T extends FieldType = FieldType> {
 
 const getHeaderColumns = (fields: TypeGridField[]) => {
     const availableWidth = 9;
-    const columns: TypeField[] = [];
+    const columns: TypeGridField[] = [];
     let utilizedWidth = 0;
 
     fields.forEach((field) => {
@@ -96,8 +98,8 @@ const GridFormHeader: React.FC<GridCompProps> = ({ control, grid }) => {
                     />
                 </div>
 
-                < div className="px-3 flex items-center justify-center border-r border-gray-300 h-full" >
-                    <span className="text-sm font-medium" > No.</span>
+                <div className="px-3 flex items-center justify-center border-r border-gray-300 h-full" >
+                    <span className="text-sm font-medium">No.</span>
                 </div>
 
                 {
@@ -149,7 +151,7 @@ const GridFormBody: React.FC<GridCompProps> = ({ control, grid }) => {
             {
                 rows.map((row, index) => (
                     <div
-                        key={row.id}
+                        key={index}
                         style={styles}
                         className="grid items-center min-h-[2.5rem] border-b border-gray-200 last:border-b-0"
                     >
@@ -166,33 +168,30 @@ const GridFormBody: React.FC<GridCompProps> = ({ control, grid }) => {
                             </span>
                         </div>
 
-                        {
-                            columns.map((field, colIndex) => (
-                                <div
-                                    key={colIndex}
-                                    className={
-                                        cn(
-                                            "h-full flex items-center border-r border-gray-200",
-                                            field.type === "checkbox" && "justify-center"
-                                        )
-                                    }
-                                >
-                                    <Field
-                                        field={field}
-                                        handleChange={(value) => {
-                                            control.setRowValue({
-                                                fieldname: grid.gridName,
-                                                rowId: row.id,
-                                                name: field.name,
-                                                value: value
-                                            })
-                                        }}
-                                        value={row.fields?.[field.name].value as string}
-                                    // state={row}
-
-                                    />
-                                </div>
-                            ))}
+                        {columns.map((field, colIndex) => (
+                            <div
+                                key={colIndex}
+                                className={
+                                    cn(
+                                        "h-full flex items-center border-r border-gray-200",
+                                        field.type === "checkbox" && "justify-center"
+                                    )
+                                }
+                            >
+                                <Field
+                                    field={field}
+                                    handleChange={(value) => {
+                                        control.setRowValue({
+                                            fieldname: grid.gridName,
+                                            rowId: row.id,
+                                            name: field.name,
+                                            value: value
+                                        })
+                                    }}
+                                    value={row.fields?.[field.name].value as string}
+                                />
+                            </div>
+                        ))}
 
                         <div className="px-3 flex items-center justify-center h-full" >
                             <button
@@ -206,6 +205,7 @@ const GridFormBody: React.FC<GridCompProps> = ({ control, grid }) => {
                         </div>
                     </div>
                 ))}
+
             {/* {expandedRow && <MiniForm form={store} fields={fields} state={expandedRow} />} */}
         </main>
     );
@@ -246,17 +246,11 @@ interface GridFormProps {
 const GridForm: React.FC<GridFormProps> = (props) => {
     if (!props.grid && !props.control) return <></>;
 
-    console.log(props.grid)
-    console.log(props.control)
 
     return (
         <>
             <div className={
-                cn(
-                    "border rounded-md mb-4",
-                    props.gridContentClass,
-                    // hasError ? "ring-destructive ring-2" : ""
-                )
+                cn("border rounded-md mb-4", props.gridContentClass)
             }>
                 <GridFormHeader control={props.control} grid={props.grid} />
                 <GridFormBody control={props.control} grid={props.grid} />
@@ -269,30 +263,27 @@ const GridForm: React.FC<GridFormProps> = (props) => {
 interface FieldProps {
     field: TypeField;
     handleChange: (value: string) => void;
-    handleBlur: (value: string) => void;
     value: string;
-    // gridUpdate?: boolean;
-
-    // grid: TypeGridFormStore;
 }
 
 
 
 const Field: React.FC<FieldProps> = (props) => {
+    if (["column", "section"].includes(props.field.type)) return <></>;
+
     const { field } = props;
-    // const [className, setClassName] = useState<string>("h-full w-full shadow-none border-none rounded-none");
-    // const { field, onBlur, state, grid, } = props;
+
 
     const className = "h-full w-full shadow-none border-none rounded-none";
-    // const fieldState = state.fields[field.name];
     const value = props.value;
-
 
     const handleChange = (value) => {
         props.handleChange(value);
     };
 
-
+    // const [className, setClassName] = useState<string>("h-full w-full shadow-none border-none rounded-none");
+    // const { field, onBlur, state, grid, } = props;
+    // const fieldState = state.fields[field.name];
     // useEffect(() => {
     //     if (!fieldState?.hasError) {
     //         setClassName("h-full w-full shadow-none border-none rounded-none");
@@ -305,7 +296,6 @@ const Field: React.FC<FieldProps> = (props) => {
         return (
             <Checkbox
                 name={field.name}
-                // id={state.id}
                 checked={Boolean(value)}
                 onCheckedChange={(checked) => handleChange?.(checked)}
             />
@@ -315,14 +305,11 @@ const Field: React.FC<FieldProps> = (props) => {
     if (field.type === "select") {
         return (
             <Select
-
                 value={value as string || ""}
                 onValueChange={(val) => handleChange?.(val)}
-
             >
                 <SelectTrigger className={cn("shadow-none border-none", className)}
                 // onBlur={() => onBlur?.(value)}
-                // id={state.id}
                 >
                     <SelectValue placeholder={field.placeholder || "Select"} />
                 </SelectTrigger>
@@ -348,7 +335,6 @@ const Field: React.FC<FieldProps> = (props) => {
                 options={field.options}
                 value={value as OptionType}
                 getOptions={field.getOptions}
-            // renderOption={field.renderOption}
             />
         );
     }
@@ -359,6 +345,7 @@ const Field: React.FC<FieldProps> = (props) => {
                 className={cn("border-none shadow-none h-full", className)} />
         )
     }
+
     return (
         <Input
             name={field.name}
@@ -367,7 +354,6 @@ const Field: React.FC<FieldProps> = (props) => {
             className={cn("border-none shadow-none", className)}
             type={field.type}
             onChange={(event) => handleChange?.(event.target.value)}
-            // onBlur={(event) => onBlur?.(event.target.value)}
             defaultValue={value as string || ""}
             value={value as string}
             placeholder={field.placeholder}

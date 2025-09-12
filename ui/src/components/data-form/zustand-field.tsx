@@ -64,18 +64,21 @@ const Field: React.FC<FieldProps> = React.memo((props) => {
         )
     }
     if (field.type == "table") {
-        return <div className="mb-4">
+
+        return <div className="mb-4"
+        >
+            <label htmlFor={field.name} className="text-sm block mb-2 font-medium">
+                {field.label} {required ? <span className="text-destructive">*</span> : <></>}
+            </label>
+
             <GridForm
                 control={store}
+                gridContentClass={state.hasError ? "ring-destructive ring-2" : ""}
                 grid={store.grids[field.name]}
-            // fields={field.fields}
-            // values={state.value as Record<string, FieldValue>[] || []}
-            // gridContentClass={classNames}
-            // onChange={(values) => {
-            //     handleChange(values);
-            // }}
-            // control={store}
             />
+            {state?.hasError && (
+                <span className="text-red-500 text-xs mt-1">{state.error}</span>
+            )}
         </div>
     }
     return (

@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "router:generate": "tanstack-router-cli generate"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
@@ -25,6 +26,8 @@
     "@reduxjs/toolkit": "^2.8.0",
     "@tailwindcss/vite": "^4.1.4",
     "@tanstack/react-query": "^5.74.4",
+    "@tanstack/react-router": "^1.131.41",
+    "@tanstack/react-router-devtools": "^1.131.41",
     "@tanstack/react-table": "^8.21.3",
     "axios": "^1.10.0",
     "class-variance-authority": "^0.7.1",
@@ -48,6 +51,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
+    "@tanstack/router-cli": "^1.131.41",
+    "@tanstack/router-plugin": "^1.131.41",
+    "@tanstack/router-vite-plugin": "^1.131.41",
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
