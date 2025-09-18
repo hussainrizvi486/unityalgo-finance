@@ -93,7 +93,7 @@ const AutoComplete: React.FC<AutoCompleteProps> = (props) => {
                 >
                     <div className='flex items-center justify-between gap-2'>
                         <div className='text-sm overflow-hidden text-ellipsis whitespace-nowrap '>
-                            {selected ? results.find((v) => v.value == selected).label : props.placeholder || props.label || "Select an option"}
+                            {selected ? results.find((v) => v.value == selected)?.label : props?.placeholder || props?.label || "Select an option"}
                         </div>
 
                         <ChevronsUpDown className='size-4 shrink-0' />

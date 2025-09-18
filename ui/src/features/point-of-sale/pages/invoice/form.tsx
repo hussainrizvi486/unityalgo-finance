@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import moment from "moment";
-import { data, useParams } from "react-router-dom";
+import { useParams } from '@tanstack/react-router'
 import { DataForm, type TypeDFStore } from "@/components/data-form/zustand-version";
 import type { GridFieldChangeHandler, GridFormState, TypeField } from "@/components/grid-form/types";
 import api from "@/api";
@@ -332,15 +332,15 @@ const useInvoiceQuery = (id: string | undefined) => {
                 throw error;
             }
         },
-        enabled: Boolean(id),
+        enabled: id != "new",
         retry: 2,
         staleTime: 5 * 60 * 1000, // 5 minutes
     });
 };
 
 const InvoiceForm = () => {
-    const params = useParams<{ id?: string }>();
-    const { data, isLoading, error, isError } = useInvoiceQuery(params.id);
+    const params = useParams({ from: '/app/invoice/$action'});
+    const { data, isLoading, error, isError } = useInvoiceQuery(params.action);
 
     // Show loading state
     if (isLoading) {
@@ -377,6 +377,7 @@ const InvoiceForm = () => {
 
     // Prepare form values
     const formValues = data || {};
+    console.log(formValues)
     const handleSave = (values: Record<string, any>) => {
         // Handle form submission
         console.log("Saving invoice:", values);

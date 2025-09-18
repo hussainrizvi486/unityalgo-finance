@@ -23,7 +23,7 @@ class POSInvoiceStatus(models.TextChoices):
 class POSInvoice(BaseModel):
     company = models.ForeignKey(Company, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    invoice_no = models.CharField(max_length=255, unique=True)
+    invoice_no = models.CharField(max_length=255, unique=True, null=True, blank=True)
     posting_date = models.DateTimeField(default=timezone.now())
     is_return = models.BooleanField(default=False)
     status = models.CharField(
@@ -56,15 +56,14 @@ class POSInvoice(BaseModel):
         max_digits=5, decimal_places=2, default=0.00
     )
 
+
+    
     def save(self, *args, **kwargs):
         if not self.invoice_no:
             invoices = POSInvoice.objects.count()
             self.invoice_no = f"{str(invoices + 1).zfill(6)}"
 
-        self.total_amount = sum(item.amount for item in self.items.all())
-        self.total_quantity = sum(item.quantity for item in self.items.all())
-        self.grand_total = self.total_amount - self.discount_amount
-
+        self.calculate_totals()
         super().save(*args, **kwargs)
 
     def calculate_totals(self):
@@ -72,7 +71,8 @@ class POSInvoice(BaseModel):
         self.discount_amount = sum(item.discount_amount for item in items)
         self.total_amount = sum(item.amount for item in items)
         self.total_quantity = sum(item.quantity for item in items)
-        self.save()
+        print(self.total_quantity)
+        print(self.total_amount)
 
 
 class POSInvoiceItem(models.Model):

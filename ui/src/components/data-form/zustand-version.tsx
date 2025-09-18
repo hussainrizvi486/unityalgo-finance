@@ -8,6 +8,7 @@ import { buildLayout } from "./utils";
 import { Column, Section } from "./components/layout";
 import type { GridFormRowState } from "../grid-form/types";
 import { toast } from "react-hot-toast";
+import { GridForm } from "./components/grid-form";
 
 
 export type DFFieldState = {
@@ -19,14 +20,11 @@ export type DFFieldState = {
 
 export type DFState = Record<string, DFFieldState>;
 
-
 export interface TypeGridFormStore {
     gridName: string;
     fields: TypeField[];
     rows: GridFormRowState[];
     expandedRow: GridFormRowState | null;
-
-    // Computed values
     allRowsSelected: boolean;
     selectedRowsCount: number;
     hasError: boolean;
@@ -119,7 +117,14 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
 
 
 
-    getValues: () => get().values,
+    getValues: () => {
+        const { state } = get();
+        const values: DFValues = {};
+        Object.keys(state).forEach((key) => {
+            values[key] = state[key].value
+        })
+        return values
+    },
 
     reset: () => {
         const { fields } = get();
@@ -178,7 +183,15 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
         const fieldState = state[field.name];
         if (!fieldState) return true;
         if (field.type == "table") {
-            // const grid = get().grids[field.name];
+            const grid = get().grids[field.name];
+            console.log("validating grid", field.name, grid);
+            grid.rows.forEach((row) => {
+                Object.keys(row.fields).forEach((key) => {
+                    const cellField = row.fields[key];
+                    const gridField = field.fields?.find(f => f.name === key);
+                })
+
+            })
         }
 
         if (field.required && !fieldState.value) {
@@ -216,7 +229,15 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
 
         fields.forEach((field) => {
             if (field.type === 'section' || field.type === 'column') return;
-            const value = values?.[field.name] ?? field.defaultValue ?? null;
+            let defaultValue = values?.[field.name] ?? field.defaultValue ?? null;
+            if (defaultValue === undefined || defaultValue === null) {
+                if (field.type === 'checkbox') defaultValue = false;
+                if (field.type === 'table') defaultValue = [];
+                if (["currency", "decimal", "number"].includes(field.type)) {
+                    defaultValue = 0;
+                }
+            }
+            const value = defaultValue;
             initialValues[field.name] = value;
 
             state[field.name] = {
