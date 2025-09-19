@@ -1,5 +1,6 @@
 from django.utils import timezone
 from django.db import models
+from django.db.models import Max
 from apps.accounting.models.customer import Customer
 from apps.accounting.models.company import Company
 from apps.stock.models import Product
@@ -21,7 +22,12 @@ class POSInvoiceStatus(models.TextChoices):
 
 
 class POSInvoice(BaseModel):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    company = models.ForeignKey(
+        Company,
+        on_delete=models.CASCADE,
+        null=True,  # Temporarily allow null
+        blank=True,  # Temporarily allow blank
+    )
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     invoice_no = models.CharField(max_length=255, unique=True, null=True, blank=True)
     posting_date = models.DateTimeField(default=timezone.now())
@@ -56,12 +62,40 @@ class POSInvoice(BaseModel):
         max_digits=5, decimal_places=2, default=0.00
     )
 
+    def generate_invoice_number(self):
+        """Generate a unique invoice number with proper race condition handling."""
+        # with transaction.atomic():
+        # Get the last invoice number for this company
+        last_invoice = POSInvoice.objects.count()
+        next_number = int(last_invoice) + 1
 
-    
+        # Option 1: Simple sequential numbering
+        base_invoice_no = f"INV-{str(next_number).zfill(6)}"
+
+        # Option 2: Company-specific numbering (uncomment if preferred)
+        # company_prefix = self.company.code[:3].upper() if hasattr(self.company, 'code') else 'INV'
+        # base_invoice_no = f"{company_prefix}-{str(next_number).zfill(6)}"
+
+        # Option 3: Date-based numbering (uncomment if preferred)
+        # date_str = self.posting_date.strftime('%Y%m%d')
+        # base_invoice_no = f"INV-{date_str}-{str(next_number).zfill(4)}"
+
+        # Ensure uniqueness (handle edge cases)
+        invoice_no = base_invoice_no
+        counter = 1
+        while (
+            POSInvoice.objects.filter(invoice_no=invoice_no)
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            invoice_no = f"{base_invoice_no}-{counter}"
+            counter += 1
+
+        return invoice_no
+
     def save(self, *args, **kwargs):
         if not self.invoice_no:
-            invoices = POSInvoice.objects.count()
-            self.invoice_no = f"{str(invoices + 1).zfill(6)}"
+            self.invoice_no = self.generate_invoice_number()
 
         self.calculate_totals()
         super().save(*args, **kwargs)

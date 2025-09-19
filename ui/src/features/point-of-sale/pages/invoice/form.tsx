@@ -8,6 +8,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Spinner } from "@/components/loaders/spinner";
 import { decimal } from "@/utils";
 import type { TypeGridFormStore } from "@/components/grid-form/zustand-grid-form";
+import toast from "react-hot-toast";
+import { useNavigate } from '@tanstack/react-router'; // Or your specific framework's import
+import { set } from "react-hook-form";
 
 
 
@@ -339,8 +342,10 @@ const useInvoiceQuery = (id: string | undefined) => {
 };
 
 const InvoiceForm = () => {
-    const params = useParams({ from: '/app/invoice/$action'});
+    const params = useParams({ from: '/app/invoice/$action' });
+    const navigate = useNavigate();
     const { data, isLoading, error, isError } = useInvoiceQuery(params.action);
+    const isNew = params.action === "new";
 
     // Show loading state
     if (isLoading) {
@@ -377,24 +382,33 @@ const InvoiceForm = () => {
 
     // Prepare form values
     const formValues = data || {};
-    console.log(formValues)
-    const handleSave = (values: Record<string, any>) => {
-        // Handle form submission
+
+    const handleSave = async (values: Record<string, any>) => {
+        if (isNew) {
+            const response = await api.post("api/pos/create-invoice", values);
+            if (response.status === 201) {
+                toast.success("Invoice created successfully", { position: "top-right" });
+                setTimeout(() => {
+                    navigate({ to: `/app/invoice/` });
+                }, 500);
+            }
+            else {
+                toast.error("Failed to create invoice", { position: "top-right" });
+                console.error("Failed to create invoice:", response);
+            }
+            return
+        }
+        else {
+
+        }
+ 
         console.log("Saving invoice:", values);
     }
 
     return (
         <div className="mx-auto p-4">
             <DataForm fields={fields} title="POS Invoice" values={formValues}
-                onSave={handleSave}
-            />
-            {/* <DataFormProvider
-                fields={fields}
-                title={formTitle}
-                values={formValues}
-            >
-                <DataForm />
-            </DataFormProvider> */}
+                onSave={handleSave} />
         </div>
     );
 };

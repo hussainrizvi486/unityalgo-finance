@@ -46,7 +46,7 @@ export interface TypeDFStore {
 
     validate: () => boolean
     getValues: () => DFValues;
-    validateField: ({ field }: { field: TypeField }) => boolean | void;
+    validateField: ({ field }: { field: TypeField }) => { validated: boolean, errors: Record<string, object | string> };
     reset: () => void;
     triggerSave: (callback?: (values: DFValues) => void) => void;
     // onSave: (values: DFValues, callback: (values: ) => void) => void;
@@ -180,19 +180,10 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
 
     validateField: ({ field }: { field: TypeField }) => {
         const { state } = get();
+        const errors: Record<string, object | string> = {}; // final structured errors
         const fieldState = state[field.name];
-        if (!fieldState) return true;
-        if (field.type == "table") {
-            const grid = get().grids[field.name];
-            console.log("validating grid", field.name, grid);
-            grid.rows.forEach((row) => {
-                Object.keys(row.fields).forEach((key) => {
-                    const cellField = row.fields[key];
-                    const gridField = field.fields?.find(f => f.name === key);
-                })
-
-            })
-        }
+        const errorKey = field.label || field.name;
+        if (!fieldState) return { validated: true, errors: {} };
 
         if (field.required && !fieldState.value) {
             get().setError({
@@ -200,24 +191,110 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
                 hasError: true,
                 message: `${field.label ?? field.name} is required`,
             });
-            return false;
+            return { validated: false, errors: { [errorKey]: `${field.label ?? field.name} is required` } };
+
         }
-        return true;
+
+        if (field.type == "table") {
+            const grid = get().grids[field.name];
+
+            if (field.required && !grid.rows.length) {
+                const msg = `${field.label ?? field.name} is required`;
+                get().setError({
+                    name: field.name,
+                    hasError: true,
+                    message: msg,
+                });
+                errors[errorKey] = msg;
+                return { validated: false, errors };
+            }
+
+            let hasError = false;
+            grid.rows.forEach((row) => {
+                Object.keys(row.fields).forEach((key) => {
+                    const cell = row.fields[key];
+                    const gridField = field.fields?.find(f => f.name === key);
+                    const errorKey = field.label || field.name;
+                    if (gridField.required && (cell.value === null || cell.value === undefined || cell.value === '')) {
+                        const msg = `${gridField.label || gridField.name} is required`;
+                        cell.hasError = true;
+                        cell.error = msg;
+                        row.errors[key] = msg;
+
+                        if (!errors[errorKey]) {
+                            errors[errorKey] = {};
+                        }
+
+                        if (!errors[errorKey][row.index]) {
+                            errors[errorKey][row.index] = {};
+                        }
+
+                        errors[errorKey][row.index][key] = msg;
+                        hasError = true
+
+                    } else {
+                        cell.hasError = false;
+                        cell.error = '';
+                        delete row.errors[key];
+                    }
+                })
+            })
+
+            if (hasError) {
+                return { validated: false, errors };
+            }
+        }
+
+
+        return { validated: true, errors: {} };
     },
 
+    handleErrors: (errors: Record<string, object | string>) => {
+        Object.keys(errors).forEach((key) => {
+            if (typeof errors[key] === 'string') {
+                toast.error(errors[key] as string, { position: "top-right" });
+            }
+            else if (typeof errors[key] === 'object') {
+
+                Object.keys(errors[key] as object).forEach((row) => {
+                    let msg = "Validation errors in row " + row + ": ";
+                    // Mandatory fields required in table Items, Row 2
+                    const rowErrors = errors[key][row];
+                    Object.keys(rowErrors).forEach((field) => {
+                        msg += `\n - ${field}: ${rowErrors[field]}`;
+                    });
+
+                    toast.error(msg, { position: "top-right" });
+                })
+
+
+            }
+        })
+    },
 
     validate: (): boolean => {
-        const { fields, validateField } = get();
+        const { fields, validateField, handleErrors } = get();
         console.log("validate called");
+        const formErrors = {};
         let valid = true;
+        handleErrors(formErrors);
+
         fields.forEach((field) => {
             if (field.type !== 'section' && field.type !== 'column') {
-                if (!validateField({ field })) valid = false;
+                const { validated, errors } = validateField({ field });
+                if (Object.keys(errors).length) Object.assign(formErrors, errors);
+                console.error(errors)
+                if (!validated) valid = false;
             }
         });
 
 
+
         set({ isValid: valid });
+        if (Object.keys(formErrors).length) {
+            handleErrors(formErrors);
+        }
+
         return valid;
     },
 
@@ -258,7 +335,6 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
             state,
             isValid: true,
             grids,
-            // onSave: handleSave,
         });
     },
 
@@ -371,14 +447,12 @@ const useDFStore = create<TypeDFStore>((set, get) => ({
         const { validate, getValues } = get();
         const isValid = validate();
 
-        if (!isValid) {
-            toast.error("Please fix the errors before saving", {
-                position: "top-right",
-            });
+
+        if (isValid) {
+            callbackFn?.(getValues());
             return
         };
 
-        callbackFn?.(getValues());
     },
 
 }));
