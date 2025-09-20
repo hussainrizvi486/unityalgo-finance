@@ -1,5 +1,6 @@
 import re
 from uuid import uuid4
+from datetime import datetime
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
@@ -16,28 +17,33 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class DocumentStatusChoices(models.TextChoices):
+class DocumentStatus(models.TextChoices):
     DRAFT = 0, "Draft"
-    APPROVED = 1, "Approved"
-    REJECTED = 2, "Rejected"
+    SUBMITTED = 1, "Submitted"
+    CANCELLED = 2, "Cancelled"
+    ARCHIVED = 3, "Archived"
+    # ON_HOLD = 4, "On Hold"
 
 
 class BaseDocument(models.Model):
     id = models.CharField(
         primary_key=True, max_length=255, default=uuid4, editable=False
     )
-
-    docstatus = models.CharField(
-        max_length=255,
-        default=DocumentStatusChoices.DRAFT,
-        choices=DocumentStatusChoices.choices,
-    )
     naming_series = models.CharField(
         max_length=100, help_text="Series prefix for document numbering"
     )
-    document_number = models.CharField(max_length=255, unique=True, blank=True)
+    document_no = models.CharField(
+        max_length=100, unique=True, blank=True, null=True, editable=False
+    )
+
+    docstatus = models.IntegerField(
+        default=DocumentStatus.DRAFT, choices=DocumentStatus.choices
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    cancelled_on = models.DateTimeField(null=True, blank=True)
+
     created_by = models.ForeignKey(
         "auth.User",
         on_delete=models.SET_NULL,
@@ -54,94 +60,120 @@ class BaseDocument(models.Model):
     class Meta:
         abstract = True
         ordering = ["-created_at"]
+        naming_series = "DOC-{YY}-{MM}-{N:6}"
+
+    def generate_document_no(self):
+        """Generate document number - implemented in previous artifact"""
+        if self.document_no:
+            return self.document_no
+
+        pattern = (
+            self.naming_series
+            if self.naming_series
+            else getattr(self._meta, "naming_series", "DOC-{N:6}")
+        )
+
+        today = datetime.now()
+        existing_count = self.__class__.objects.filter(
+            document_no__isnull=False
+        ).count()
+        next_number = existing_count + 1
+
+        naming_pattern = {
+            "{YYYY}": today.strftime("%Y"),
+            "{YY}": today.strftime("%y"),
+            "{MM}": today.strftime("%m"),
+            "{DD}": today.strftime("%d"),
+            "{WW}": today.strftime("%U"),
+        }
+
+        n_pattern = re.search(r"\{N:(\d+)\}", pattern)
+        if n_pattern:
+            digits = int(n_pattern.group(1))
+            naming_pattern[f"{{N:{digits}}}"] = str(next_number).zfill(digits)
+
+        name = pattern
+        for key, value in naming_pattern.items():
+            name = name.replace(key, value)
+
+        self.document_no = name
+        return name
+
+    def _validate_status_transition(self, old_status, new_status):
+        """Validate status transitions based on business rules"""
+        # Define allowed transitions
+        allowed_transitions = {
+            DocumentStatus.DRAFT: [
+                DocumentStatus.SUBMITTED,
+                DocumentStatus.CANCELLED,
+                DocumentStatus.ARCHIVED,
+            ],
+            DocumentStatus.SUBMITTED: [
+                DocumentStatus.CANCELLED,
+            ],
+            DocumentStatus.ARCHIVED: [DocumentStatus.DRAFT, DocumentStatus.CANCELLED],
+            # Add more transitions as needed
+        }
+
+        if old_status != new_status:
+            valid_transitions = allowed_transitions.get(old_status, [])
+            if new_status not in valid_transitions:
+                raise ValidationError(
+                    f"Invalid status transition from {DocumentStatus(old_status).label} "
+                    f"to {DocumentStatus(new_status).label}"
+                )
+
+    @property
+    def is_editable(self):
+        """Check if document can be edited based on status"""
+        return self.docstatus in [DocumentStatus.DRAFT]
+
+    def submit(self, user=None):
+        can_submit, message = self.can_submit(user)
+
+        if not can_submit:
+            raise ValidationError(message)
+
+        # self.submitted_by = user
+        # self.submitted_on = datetime.now()
+        self.docstatus = DocumentStatus.SUBMITTED
+        self.save()
+
+    def can_cancel(self, user=None):
+        """Check if document can be cancelled"""
+        if self.docstatus in [DocumentStatus.CANCELLED, DocumentStatus.ARCHIVED]:
+            return False, "Document cannot be cancelled"
+
+        return True, "Can cancel"
+
+    def cancel(self, user=None):
+        """Cancel the document"""
+        can_cancel, message = self.can_cancel(user)
+        if not can_cancel:
+            raise ValidationError(message)
+
+        self.docstatus = DocumentStatus.CANCELLED
+        self.cancelled_by = user
+        self.cancelled_on = datetime.now()
+        self.save()
+
+    def can_submit(self, user=None):
+        """Check if document can be submitted"""
+
+        # if not self.is_submittable:
+        #     return False, "Document is not submittable"
+
+        if self.docstatus != DocumentStatus.DRAFT:
+            return False, "Only draft documents can be submitted"
+
+        return True, "Can submit"
 
     def save(self, *args, **kwargs):
-        if not self.document_number:
-            self.document_number = self.make_id()
+        if not self.document_no:
+            self.document_no = self.generate_document_no()
+
+        if self.id:
+            old_instance = self.__class__.objects.get(pk=self.pk)
+            self._validate_status_transition(old_instance.docstatus, self.docstatus)
+
         super().save(*args, **kwargs)
-
-    def make_id(self):
-        """
-        Generate document ID based on naming series.
-
-        Rules:
-        - Each Series Prefix on a new line
-        - Allowed special characters are "/" and "-"
-        - Set digits using dot (.) followed by hashes (#). Default is 5 digits
-        - Variables between dots:
-          .YYYY. - Year in 4 digits
-          .YY. - Year in 2 digits
-          .MM. - Month
-          .DD. - Day of month
-          .WW. - Week of the year
-          .FY. - Fiscal Year
-          .{fieldname}. - field value from document
-
-        Examples: INV-, INV-10-, INVK-, INV-.YYYY.-.{branch}.-.MM.-.####
-        """
-        if not self.naming_series:
-            raise ValidationError("Naming series is required")
-
-        series = self.naming_series
-        now = timezone.now()
-
-        # Replace date variables
-        series = series.replace(".YYYY.", str(now.year))
-        series = series.replace(".YY.", str(now.year)[2:])
-        series = series.replace(".MM.", f"{now.month:02d}")
-        series = series.replace(".DD.", f"{now.day:02d}")
-        series = series.replace(".WW.", f"{now.isocalendar()[1]:02d}")
-
-        # Calculate fiscal year (assuming fiscal year starts in April)
-        fiscal_year = now.year if now.month >= 4 else now.year - 1
-        series = series.replace(".FY.", str(fiscal_year))
-
-        # Replace field variables
-        field_pattern = r"\.{(\w+)}\."
-        matches = re.findall(field_pattern, series)
-        for field_name in matches:
-            if hasattr(self, field_name):
-                field_value = getattr(self, field_name)
-                if field_value:
-                    series = series.replace(f".{{{field_name}}}.", str(field_value))
-                else:
-                    series = series.replace(f".{{{field_name}}}.", "")
-
-        # Handle digit formatting
-        hash_pattern = r"\.#+$"
-        hash_match = re.search(hash_pattern, series)
-
-        if hash_match:
-            hash_part = hash_match.group()
-            digit_count = len(hash_part) - 1  # subtract 1 for the dot
-            prefix = series.replace(hash_part, "")
-        else:
-            digit_count = 5  # default
-            prefix = series
-
-        # Get next sequence number
-        sequence_number = self._get_next_sequence_number(prefix)
-
-        # Format with leading zeros
-        formatted_number = f"{sequence_number:0{digit_count}d}"
-
-        return f"{prefix}{formatted_number}"
-
-    def _get_next_sequence_number(self, prefix):
-        """Get the next sequence number for the given prefix"""
-        from django.db import connection
-
-        # Get the model's table name
-        table_name = self._meta.db_table
-
-        with connection.cursor() as cursor:
-            cursor.execute(
-                f"""
-                SELECT MAX(CAST(SUBSTRING(document_number, %s) AS UNSIGNED)) 
-                FROM {table_name} 
-                WHERE document_number LIKE %s
-                """,
-                [len(prefix) + 1, f"{prefix}%"],
-            )
-            result = cursor.fetchone()[0]
-            return (result or 0) + 1

@@ -398,10 +398,7 @@ const InvoiceForm = () => {
             }
             return
         }
-        else {
 
-        }
- 
         console.log("Saving invoice:", values);
     }
 
