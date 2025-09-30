@@ -8,6 +8,7 @@ class Company(models.Model):
         null=True,
         blank=True,
     )
+    default_currency = models.CharField(null=True)
     name = models.CharField(max_length=255, unique=True)
     address = models.TextField(blank=True, null=True)
     contact_number = models.CharField(max_length=50, blank=True, null=True)

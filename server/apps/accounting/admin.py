@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models.customer import Customer, CustomerGroup
 from .models.company import Company
-from .models.accounts import Account
+from .models.accounts.accounts import Account
 
 admin.site.register(Customer)
 admin.site.register(CustomerGroup)

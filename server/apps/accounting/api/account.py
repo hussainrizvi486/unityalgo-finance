@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework.viewsets import ViewSet
-from apps.accounting.models.accounts import Account
+from server.apps.accounting.models.accounts.accounts import Account
 
 
 class AccountViewSerializer(serializers.ModelSerializer):

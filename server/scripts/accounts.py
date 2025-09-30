@@ -13,7 +13,7 @@ from decimal import Decimal
 # os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'your_project.settings')
 # django.setup()
 
-from apps.accounting.models.accounts import (
+from server.apps.accounting.models.accounts.accounts import (
     Account,
     Company,
 )  # Replace 'your_app' with actual app name
